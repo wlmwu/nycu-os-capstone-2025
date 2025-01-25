@@ -32,6 +32,18 @@ void arrset(void *ptr, int value, unsigned int num);
 void uint2hexstr(char *output, unsigned int d);
 #define LEN_U32_HEX_STR 11
 
+/*
+ * @param output A pointer to a character array where the converted string will be stored.
+ *               The array should be large enough to store the digits of the number, 
+ *               the null terminator, and possible characters for the base.
+ * @param value  The unsigned long integer to be converted to a string.
+ * @param base   The numeric base for the conversion (e.g., 10 for decimal, 16 for hexadecimal).
+ *               Valid values are between 2 and 36.
+ * 
+ * @return void This function does not return a value, it directly modifies the `output` array.
+ */
+void itos(char* output, unsigned long value, int base);
+
 /* Reboot */
 #define PM_PASSWORD 0x5a000000
 #define PM_RSTC 0x3F10001c

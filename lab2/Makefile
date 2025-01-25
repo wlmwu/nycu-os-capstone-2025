@@ -4,7 +4,7 @@ LD = $(CROSS_COMPILE_TOOL)-ld
 OBJCOPY = $(CROSS_COMPILE_TOOL)-objcopy
 CFLAGS = -mcpu=cortex-a53+nosimd -nostdlib -nostdinc -ffreestanding
 LDFLAGS = -m aarch64elf -nostdlib -T linker.ld
-OUTPUT = kernel8.img
+OUTPUT = bootloader.img
 ELF = kernel8.elf
 SRC_DIR = src
 SHELL_DIR = shell

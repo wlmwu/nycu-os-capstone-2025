@@ -1,7 +1,9 @@
 ENTRY(_start)
 
 SECTIONS {
-    . = 0x80000;                    /* Start address where the program will be loaded */
+    _bootloader_load_addr = 0x60000;    /* Bootloader start address */
+    _kernel_load_addr = 0x80000;        /* Kernel load address */
+    . = _bootloader_load_addr;          /* Start address where the program will be loaded */
 
     .text : { *(.text.boot) *(.text) } /* text.boot is custom section. To specify bootloader code */
     .rodata : { *(.rodata) }

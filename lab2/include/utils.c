@@ -31,6 +31,40 @@ void uint2hexstr(char *output, unsigned int d) {
     output[8] = '\0';
 }
 
+void itos(char* output, unsigned long value, int base) {
+    char* ptr = output;
+    char* end = output; // To reverse the result later
+
+    if (base < 2 || base > 36) {
+        return; // Invalid base
+    }
+
+    // Handle 0 as a special case
+    if (value == 0) {
+        *end++ = '0';
+        *end = '\0';
+        return;
+    }
+
+    // Convert the number to the specified base
+    while (value > 0) {
+        unsigned long remainder = value % base;
+        *end++ = (remainder < 10) ? '0' + remainder : 'a' + (remainder - 10);
+        value /= base;
+    }
+
+    *end = '\0'; // Null-terminate the string
+
+    // Reverse the string in-place
+    char* start = output;
+    end--; // Move back to the last character
+    while (start < end) {
+        char temp = *start;
+        *start++ = *end;
+        *end-- = temp;
+    }
+}
+
 
 /* Reboot */
 void set(long addr, unsigned int value) {

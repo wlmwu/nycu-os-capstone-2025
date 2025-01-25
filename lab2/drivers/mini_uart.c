@@ -33,20 +33,34 @@ void uart_init() {
 }
 
 char uart_recv() {
-    while (!(*AUX_MU_LSR_REG & 0x01));
-    char c = (char)(*AUX_MU_IO_REG);
+    char c = uart_getc();
     return c == '\r' ? '\n' : c;
 }
 
-void uart_send(const char c) {
+void uart_putc(const char c) {
     while (!(*AUX_MU_LSR_REG & 0x20));
     *AUX_MU_IO_REG = c;
 }
 
 void uart_puts(const char* str) {
     while (*str) {
-        if (*str == '\n') uart_send('\r');
-        uart_send(*str++);
+        if (*str == '\n') uart_putc('\r');
+        uart_putc(*str++);
     }
 }
 
+char uart_getc() {
+    while(!(*AUX_MU_LSR_REG & 0x01));
+    char c = (char)(*AUX_MU_IO_REG);
+    return c;
+}
+
+unsigned int uart_getu() {
+    char buf[4];
+    
+    for (int i = 0; i < 4; ++i) {
+        buf[i] = uart_recv();
+    }
+
+    return *((unsigned int*)buf);
+}

@@ -1,5 +1,7 @@
 #include "shell.h"
 
+extern unsigned long _kernel_load_addr;
+
 void shell_init() {
     uart_puts(kWellcomeMsg);
     uart_puts("\n");
@@ -79,4 +81,29 @@ void command_info() {
 
 void command_reboot() {
     reset(NUM_TICKS);
+}
+
+void command_loadimg() {
+    uart_puts("Waiting for kernel image...\n");
+
+    // Receive kernel size (4 bytes)
+    unsigned int kernel_size = 0;
+    kernel_size = uart_getu();
+
+    char ssize[NUM_CMD_SEND_MAX];
+    itos(ssize, kernel_size, 10);
+    uart_puts("Kernel size received: ");
+    uart_puts(ssize);
+    uart_puts(" bytes\n");
+
+    // Receive kernel data
+    char* kernel = (char*) (&_kernel_load_addr);
+    for (unsigned int i = 0; i < kernel_size; i++) {
+        kernel[i] = uart_getc();
+    }
+
+    uart_puts("Kernel loaded successfully...\n");;
+
+    // Jump to the kernel
+    ((void (*)()) kernel)();
 }

@@ -24,12 +24,14 @@ void command_help(void);
 void command_hello(void);
 void command_info(void);
 void command_reboot(void);
+void command_loadimg(void);
 
 static const ShellCmds kCmds[NUM_CMD] = {
     {.command = "help", .help = "Print all available commands", .func = command_help},
     {.command = "hello", .help = "Print \"Hello World!\"", .func = command_hello},
-    {.command = "info", .help = "Get device information", .func = command_info},
-    {.command = "reboot", .help = "Reboot the device", .func = command_reboot}
+    // {.command = "info", .help = "Get device information", .func = command_info},
+    {.command = "reboot", .help = "Reboot the device", .func = command_reboot},
+    {.command = "loadimg", .help = "Load kernel image via UART", .func = command_loadimg}
 };
 
 void shell_init();
