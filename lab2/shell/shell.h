@@ -12,13 +12,13 @@
 #define NUM_CMD_SEND_MAX 128
 #define NUM_CMD_RECV_MAX 128
 
-typedef void (*CmdFunc)(void);
+typedef void (*command_fn)(void);
 
-typedef struct ShellCmds {
+typedef struct shell_cmd {
     char command[LEN_CMD_NAME_MAX];
     char help[LEN_CMD_HELP_MAX];
-    CmdFunc func;
-} ShellCmds;
+    command_fn func;
+} shell_cmd_t;
 
 void command_help(void);
 void command_hello(void);
@@ -26,7 +26,7 @@ void command_info(void);
 void command_reboot(void);
 void command_loadimg(void);
 
-static const ShellCmds kCmds[NUM_CMD] = {
+static const shell_cmd_t kCmds[NUM_CMD] = {
     {.command = "help", .help = "Print all available commands", .func = command_help},
     {.command = "hello", .help = "Print \"Hello World!\"", .func = command_hello},
     // {.command = "info", .help = "Get device information", .func = command_info},

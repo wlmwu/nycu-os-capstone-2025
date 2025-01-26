@@ -19,7 +19,7 @@ typedef enum {
     kChUnused,
     kChArm2VC,
     kChVC2Arm,
-} MboxChannel;
+} mbox_channel_t;
 
 // Tag (ARM to VC)
 // https://github.com/raspberrypi/firmware/wiki/Mailbox-property-interface
@@ -30,16 +30,16 @@ typedef enum {
     kTagGetBoardModel = 0x10001,
     kTagGetBoardRevision,
     kTagGetArmMemory = 0x10005,
-} MBoxTagID;
+} mbox_tag_id_t;
 
 // Request/Response Codes
 // https://github.com/raspberrypi/firmware/wiki/Mailbox-property-interface
 // Buffer contents section
 typedef enum {
-    kCodeRequest = 0x00000000,
-    kCodeSucceed = 0x80000000,
-    kCodeFailed = 0x80000001,
-} MBoxRequestCode;
+    kRCodeRequest = 0x00000000,
+    kRCodeSucceed = 0x80000000,
+    kRCodeFailed = 0x80000001,
+} mbox_request_code_t;
 
 // Tag Request/Response Codes
 // https://github.com/raspberrypi/firmware/wiki/Mailbox-property-interface
@@ -47,7 +47,7 @@ typedef enum {
 typedef enum {
     kTCodeRequest = 0x00000000,
     kTCodeResponse = 0x10000000,
-} MBoxTagRequest;
+} mbox_tag_request_code_t;
 
 // Tag Request/Response Codes
 // https://github.com/raspberrypi/firmware/wiki/Mailbox-property-interface
@@ -69,7 +69,7 @@ typedef enum {
     tag:    tag identifier
     num_res:    num of results
 */
-void mbox_get_info(char* output, MBoxTagID tag, unsigned int num_res);
+void mbox_get_info(char* output, mbox_tag_id_t tag, unsigned int num_res);
 int mbox_call(unsigned int*);
 
 #endif // MAILBOX_H_

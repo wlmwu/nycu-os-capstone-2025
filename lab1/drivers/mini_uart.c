@@ -1,6 +1,6 @@
 #include "mini_uart.h"
 
-void delay(unsigned int clock) {
+static void delay(unsigned int clock) {
     while (clock--) {
         asm volatile("nop");
     }
