@@ -24,14 +24,12 @@ void command_help(void);
 void command_hello(void);
 void command_info(void);
 void command_reboot(void);
-void command_loadimg(void);
 
 static const shell_cmd_t kCmds[NUM_CMD] = {
     {.command = "help", .help = "Print all available commands", .func = command_help},
     {.command = "hello", .help = "Print \"Hello World!\"", .func = command_hello},
-    // {.command = "info", .help = "Get device information", .func = command_info},
+    {.command = "info", .help = "Get device information", .func = command_info},
     {.command = "reboot", .help = "Reboot the device", .func = command_reboot},
-    {.command = "loadimg", .help = "Load kernel image via UART", .func = command_loadimg}
 };
 
 void shell_init();
@@ -40,7 +38,7 @@ void shell_run();
 void shell_cmd_read(char*);
 void shell_cmd_parse(char*);
 
-static const char* kWellcomeMsg = "\n"
+static const char* kWelcomeMsg = "\n"
     "\033[1;95m    ____      ___      ___                  \033[1;96m   ____      ____      ____      ____  \n"
     "\033[1;95m   F __ ]    F __\".  ,\"___\".                \033[1;96m  / _  `.   F _  ]    / _  `.   F ___L \n"
     "\033[1;95m  J |--| L  J (___|  FJ---L]                \033[1;96m J_/-7 .'  J |/ | L  J_/-7 .'  J |___| \n"

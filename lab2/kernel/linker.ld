@@ -1,9 +1,7 @@
 ENTRY(_start)
 
 SECTIONS {
-    _bootloader_load_addr = 0x60000;    /* Bootloader start address */
-    _kernel_load_addr = 0x80000;        /* Kernel load address */
-    . = _bootloader_load_addr;          /* Start address where the program will be loaded */
+    . = 0x80000;          /* Start address where the program will be loaded */
 
     .text : { *(.text.boot) *(.text) } /* text.boot is custom section. To specify bootloader code */
     .rodata : { *(.rodata) }
@@ -21,7 +19,7 @@ SECTIONS {
     .stack (NOLOAD) : {
         . = ALIGN(16);
         _stack_start = .;       /* Mark the start of the stack */
-        . = . + 0x100000;       /* Allocate 1MB for the stack */
+        . = . + 0x4000;       /* Allocate 4KB for the stack */
         _stack_end = .;         /* Mark the end of the stack */
     }
 

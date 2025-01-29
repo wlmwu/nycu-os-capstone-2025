@@ -4,7 +4,7 @@ LD = $(CROSS_COMPILE_TOOL)-ld
 OBJCOPY = $(CROSS_COMPILE_TOOL)-objcopy
 CFLAGS = -mcpu=cortex-a53+nosimd -nostdlib -nostdinc -ffreestanding
 LDFLAGS = -m aarch64elf -nostdlib -T linker.ld
-OUTPUT = bootloader.img
+OUTPUT = kernel8.img
 ELF = kernel8.elf
 SRC_DIR = src
 SHELL_DIR = shell
@@ -40,6 +40,12 @@ clean:
 	rm -rf $(BUILD_DIR) $(ELF) $(OUTPUT)
 
 qemu:
-	qemu-system-aarch64 -M raspi3b -kernel kernel8.img -serial null -serial stdio -display none
+	qemu-system-aarch64 -M raspi3b -kernel $(OUTPUT) -serial null -serial stdio -display none
+
+qemu-pty:
+	qemu-system-aarch64 -M raspi3b -kernel $(OUTPUT) -serial null -serial pty -display none
+
+gdb:
+	qemu-system-aarch64 -M raspi3b -kernel $(OUTPUT) -serial null -serial pty -display none -S -s
 
 .PHONY: all clean
