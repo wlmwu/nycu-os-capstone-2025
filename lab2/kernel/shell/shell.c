@@ -22,7 +22,7 @@ void shell_cmd_read(char* buf) {
     int idx = -1;
     while (idx++ < NUM_CMD_RECV_MAX) {
         c = uart_recv();
-        uart_puts(&c);       // Use puts to handle if c == '\n'
+        uart_putc(c);
         buf[idx] = c;
         if (c == '\n') {
             buf[idx] = '\0';
