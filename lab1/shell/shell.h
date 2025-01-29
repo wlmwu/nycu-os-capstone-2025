@@ -12,12 +12,12 @@
 #define NUM_CMD_SEND_MAX 128
 #define NUM_CMD_RECV_MAX 128
 
-typedef void (*command_fn)(void);
+typedef void (*command_fn_t)(void);
 
 typedef struct shell_cmd {
     char command[LEN_CMD_NAME_MAX];
     char help[LEN_CMD_HELP_MAX];
-    command_fn func;
+    command_fn_t func;
 } shell_cmd_t;
 
 void command_help(void);
@@ -38,7 +38,7 @@ void shell_run();
 void shell_cmd_read(char*);
 void shell_cmd_parse(char*);
 
-static const char* kWellcomeMsg = "\n"
+static const char* kWelcomeMsg = "\n"
     "\033[1;95m    ____      ___      ___                  \033[1;96m   ____      ____      ____      ____  \n"
     "\033[1;95m   F __ ]    F __\".  ,\"___\".                \033[1;96m  / _  `.   F _  ]    / _  `.   F ___L \n"
     "\033[1;95m  J |--| L  J (___|  FJ---L]                \033[1;96m J_/-7 .'  J |/ | L  J_/-7 .'  J |___| \n"

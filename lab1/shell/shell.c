@@ -1,7 +1,7 @@
 #include "shell.h"
 
 void shell_init() {
-    uart_puts(kWellcomeMsg);
+    uart_puts(kWelcomeMsg);
     uart_puts("\n");
     uart_puts("Type 'help' to show all available commands.\n");
     uart_puts("\n");

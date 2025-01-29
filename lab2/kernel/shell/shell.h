@@ -12,12 +12,12 @@
 #define NUM_CMD_SEND_MAX 128
 #define NUM_CMD_RECV_MAX 128
 
-typedef void (*command_fn)(void);
+typedef void (*command_fn_t)(void);
 
 typedef struct shell_cmd {
     char command[LEN_CMD_NAME_MAX];
     char help[LEN_CMD_HELP_MAX];
-    command_fn func;
+    command_fn_t func;
 } shell_cmd_t;
 
 void command_help(void);
