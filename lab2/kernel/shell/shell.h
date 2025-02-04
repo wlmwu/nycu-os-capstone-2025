@@ -4,15 +4,16 @@
 #include "mini_uart.h"
 #include "mailbox.h"
 #include "utils.h"
+#include "cpio.h"
 
-#define NUM_CMD 4
+#define NUM_CMD 6
 #define LEN_CMD_NAME_MAX 16
 #define LEN_CMD_HELP_MAX 128
 
 #define NUM_CMD_SEND_MAX 128
 #define NUM_CMD_RECV_MAX 128
 
-typedef void (*command_fn_t)(void);
+typedef void (*command_fn_t)(int argc, char **argv);
 
 typedef struct shell_cmd {
     char command[LEN_CMD_NAME_MAX];
@@ -20,16 +21,20 @@ typedef struct shell_cmd {
     command_fn_t func;
 } shell_cmd_t;
 
-void command_help(void);
-void command_hello(void);
-void command_info(void);
-void command_reboot(void);
+void command_help(int, char**);
+void command_hello(int, char**);
+void command_info(int, char**);
+void command_reboot(int, char**);
+void command_ls(int, char**);
+void command_cat(int, char**);
 
 static const shell_cmd_t kCmds[NUM_CMD] = {
     {.command = "help", .help = "Print all available commands", .func = command_help},
     {.command = "hello", .help = "Print \"Hello World!\"", .func = command_hello},
     {.command = "info", .help = "Get device information", .func = command_info},
     {.command = "reboot", .help = "Reboot the device", .func = command_reboot},
+    {.command = "ls", .help = "List files in the root directory", .func = command_ls},
+    {.command = "cat", .help = "Display file contents", .func = command_cat},
 };
 
 void shell_init();

@@ -49,6 +49,12 @@ void uart_puts(const char* str) {
     }
 }
 
+void uart_putu(const unsigned int num) {
+    char ssize[33];     /* 4 bytes + '\0' */
+    itos(ssize, num, 10);
+    uart_puts(ssize);
+}
+
 char uart_getc() {
     while(!(*AUX_MU_LSR_REG & 0x01));
     char c = (char)(*AUX_MU_IO_REG);
