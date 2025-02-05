@@ -1,5 +1,7 @@
 #include "cpio.h"
 
+static void *cpio_start;
+
 cpio_newc_header_t* cpio_get_file(cpio_newc_header_t *hptr, char **pathname, char **filedata) {
     if (strncmp(hptr->c_magic, CPIO_NEWC_MAGIC, sizeof(hptr->c_magic)) != 0) {
         return 0;
@@ -20,7 +22,7 @@ cpio_newc_header_t* cpio_get_file(cpio_newc_header_t *hptr, char **pathname, cha
 void cpio_ls(int argc, char **argv) {
     char *pathname;
     char *filedata;
-    cpio_newc_header_t *hptr = (cpio_newc_header_t*)CPIO_BASE_ADDR;
+    cpio_newc_header_t *hptr = (cpio_newc_header_t*)cpio_start;
     do {
         hptr = cpio_get_file(hptr, &pathname, &filedata);
         if (strcmp(pathname, CPIO_END_RECORD) == 0) {
@@ -41,7 +43,7 @@ void cpio_cat(int argc, char **argv) {
     char *pathname;
     unsigned int filesize;
     char *filedata;
-    cpio_newc_header_t *hptr = (cpio_newc_header_t*)CPIO_BASE_ADDR;
+    cpio_newc_header_t *hptr = (cpio_newc_header_t*)cpio_start;
     do {
         hptr = cpio_get_file(hptr, &pathname, &filedata);
         if (strcmp(pathname, target_filename) == 0 ||
@@ -57,4 +59,17 @@ void cpio_cat(int argc, char **argv) {
             break;
         } 
     } while (hptr);
+}
+
+void cpio_initramfs_callback(fdt32_t token, char *name, fdt32_t len, char *data) {
+    if (token == FDT_PROP && strcmp(name, "linux,initrd-start") == 0) {
+        cpio_start = (void*)bswap32(*(uint32_t*)data);
+    }
+}
+
+void cpio_init() {
+    fdt_traverse(cpio_initramfs_callback);
+    if (!cpio_start) {
+        uart_puts("Error: CPIO initialization failed.\n");
+    }
 }

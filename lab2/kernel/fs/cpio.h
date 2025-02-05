@@ -3,6 +3,7 @@
 
 #include "utils.h"
 #include "mini_uart.h"
+#include "fdt.h"
 #include <stdint.h>
 
 
@@ -49,5 +50,9 @@ cpio_newc_header_t* cpio_get_file(cpio_newc_header_t *hptr, char **pathname, cha
 
 void cpio_ls(int argc, char **argv);
 void cpio_cat(int argc, char **argv);
+
+void cpio_initramfs_callback(fdt32_t token, char *name, fdt32_t len, char *data);
+void cpio_init();
+
 
 #endif // CPIO_H_

@@ -2,6 +2,7 @@
 #define UTILS_H_
 
 #include <stddef.h>
+#include <stdint.h>
 
 /**
  * @param str1 A pointer to the first null-terminated string.
@@ -41,6 +42,20 @@ char *strchr(const char *str, char c);
  * @return char* A pointer to the next token in the string, or NULL if there are no more tokens.
  */
 char *strtok(char *str, const char *delim);
+
+/**
+ * @brief Computes the length of a null-terminated C string.
+ *
+ * @param str A pointer to a null-terminated C string (const char*).
+ *            The string must be properly null-terminated to avoid undefined behavior.
+ *
+ * @return The length of the string, as a size_t value, which represents the number
+ *         of characters before the null terminator.
+ *
+ * @note The string must be null-terminated; passing a non-null-terminated string
+ *       will lead to undefined behavior.
+ */
+size_t strlen(const char *str);
 
 /**
  * @brief Splits a string into individual arguments (tokens).
@@ -102,6 +117,10 @@ unsigned int hexstr2uint(char *hex);
 void itos(char* output, unsigned long value, int base);
 
 void* malloc(size_t size);
+
+#define ALIGN(val, align_len) (((val) + (align_len) - 1) / (align_len) * (align_len))
+
+uint32_t bswap32(uint32_t value);
 
 /* Reboot */
 #define PM_PASSWORD 0x5a000000

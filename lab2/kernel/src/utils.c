@@ -163,6 +163,14 @@ char *strtok(char *str, const char *delim) {
     return start;
 }
 
+size_t strlen(const char *str) {
+    size_t length = 0;
+    while (str[length] != '\0') {
+        length++;
+    }
+    return length;
+}
+
 int split_args(char* buf, char* argv[], int max_args) {
     int argc = 0;
     char* token = strtok(buf, " "); // Split by space
@@ -187,6 +195,13 @@ void* malloc(size_t size) {
     void* ptr = alloc_ptr_start;
     alloc_ptr_start += size;  // Move the pointer forward by the allocated size
     return ptr;
+}
+
+uint32_t bswap32(uint32_t value) {
+    return ((value & 0xFF000000) >> 24) | 
+           ((value & 0x00FF0000) >> 8)  | 
+           ((value & 0x0000FF00) << 8)  | 
+           ((value & 0x000000FF) << 24);
 }
 
 /* Reboot */
