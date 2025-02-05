@@ -66,13 +66,19 @@ int split_args(char* buf, char* argv[], int max_args);
 void arrset(void *ptr, int value, unsigned int num);
 
 /**
+ * Converts an unsigned integer to a hexadecimal string.
+ * 
  * @param output A pointer to a character array where the hexadecimal string will be stored.
- *               The array should be large enough to store 8 characters and the null terminator.
+ *               If NULL is passed, the function will allocate memory dynamically.
  * @param d The unsigned integer to be converted to a hexadecimal string.
  * 
- * @return void This function does not return a value, it directly modifies the `output` array.
-*/
-void uint2hexstr(char *output, unsigned int d);
+ * @return A pointer to the hexadecimal string.
+ *         If `output` is provided, it returns the same pointer.
+ *         If `output` is NULL, it returns a dynamically allocated string, 
+ *         which must be freed by the caller.
+ *         Returns NULL if memory allocation fails.
+ */
+void *uint2hexstr(char *output, unsigned int d);
 #define LEN_U32_HEX_STR 11
 
 /**
@@ -94,6 +100,8 @@ unsigned int hexstr2uint(char *hex);
  * @return void This function does not return a value, it directly modifies the `output` array.
  */
 void itos(char* output, unsigned long value, int base);
+
+void* malloc(size_t size);
 
 /* Reboot */
 #define PM_PASSWORD 0x5a000000

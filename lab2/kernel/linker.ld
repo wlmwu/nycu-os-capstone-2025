@@ -16,6 +16,13 @@ SECTIONS {
         __bss_end = .;       /* Mark the end of .bss */
     }
 
+    .heap (NOLOAD) : {
+        . = ALIGN(16);
+        _heap_start = .;  /* Start of the heap */
+        . = . + 0x10000;  /* Allocate 64KB for the heap */
+        _heap_end = .;    /* End of the heap */
+    }
+
     .stack (NOLOAD) : {
         . = ALIGN(16);
         _stack_start = .;       /* Mark the start of the stack */

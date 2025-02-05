@@ -37,7 +37,11 @@ void arrset(void *ptr, int value, unsigned int num) {
     }
 }
 
-void uint2hexstr(char *output, unsigned int d) {
+void *uint2hexstr(char *output, unsigned int d) {
+    if (!output) {  // If output is NULL, allocate memory
+        output = (char *)malloc(9);
+        if (!output) return NULL; // Memory allocation failed
+    }
     for (int i = 7; i >= 0; --i) {
         unsigned char hex_digit = (d >> (i * 4)) & 0xF;
         if (hex_digit < 10) {
@@ -47,6 +51,7 @@ void uint2hexstr(char *output, unsigned int d) {
         }
     }
     output[8] = '\0';
+    return output;
 }
 
 unsigned int hexstr2uint(char *hex) {
@@ -166,6 +171,22 @@ int split_args(char* buf, char* argv[], int max_args) {
         token = strtok(NULL, " ");
     }
     return argc;
+}
+
+extern char _heap_start;  // Start of the heap
+extern char _heap_end;    // End of the heap
+static char* alloc_ptr_start = &_heap_start;  // Start of the heap region
+void* malloc(size_t size) {
+    // Ensure the allocation is aligned (e.g., 16-byte alignment)
+    size = (size + 15) & ~15;
+
+    if (alloc_ptr_start + size > &_heap_end) {
+        return NULL;  // Out of memory
+    }
+
+    void* ptr = alloc_ptr_start;
+    alloc_ptr_start += size;  // Move the pointer forward by the allocated size
+    return ptr;
 }
 
 /* Reboot */
