@@ -1,6 +1,9 @@
 #ifndef UTILS_H_
 #define UTILS_H_
 
+#include <stddef.h>
+#include <stdint.h>
+
 /*
  * @param str1 A pointer to the first null-terminated string.
  * @param str2 A pointer to the second null-terminated string.
@@ -12,6 +15,8 @@
  *         - Positive value: `str1` is greater than `str2`
 */
 int strcmp(const char *str1, const char *str2);
+
+size_t strlen(const char *str);
 
 /*
  * @param ptr   - Pointer to the memory block to be filled.
@@ -43,6 +48,10 @@ void uint2hexstr(char *output, unsigned int d);
  * @return void This function does not return a value, it directly modifies the `output` array.
  */
 void itos(char* output, unsigned long value, int base);
+
+#define ALIGN(val, align_len) (((val) + (align_len) - 1) / (align_len) * (align_len))
+
+uint32_t bswap32(uint32_t value);
 
 /* Reboot */
 #define PM_PASSWORD 0x5a000000

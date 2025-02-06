@@ -12,6 +12,14 @@ int strcmp(const char *str1, const char *str2) {
     return (unsigned char)*str1 - (unsigned char)*str2;
 }
 
+size_t strlen(const char *str) {
+    size_t length = 0;
+    while (str[length] != '\0') {
+        length++;
+    }
+    return length;
+}
+
 void arrset(void *ptr, int value, unsigned int num) {
     unsigned char *p = (unsigned char *)ptr;  // Convert the pointer to a byte-level pointer
     for (unsigned int i = 0; i < num; i++) {
@@ -63,6 +71,13 @@ void itos(char* output, unsigned long value, int base) {
         *start++ = *end;
         *end-- = temp;
     }
+}
+
+uint32_t bswap32(uint32_t value) {
+    return ((value & 0xFF000000) >> 24) | 
+           ((value & 0x00FF0000) >> 8)  | 
+           ((value & 0x0000FF00) << 8)  | 
+           ((value & 0x000000FF) << 24);
 }
 
 
