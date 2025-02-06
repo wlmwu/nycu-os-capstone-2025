@@ -18,13 +18,13 @@ void shell_run() {
 }
 
 void shell_cmd_read(char* buf) {
-    char c;
+    char c[] = "\0\0";
     int idx = -1;
     while (idx++ < NUM_CMD_RECV_MAX) {
-        c = uart_recv();
-        uart_send(c);
-        buf[idx] = c;
-        if (c == '\n') {
+        c[0] = uart_recv();
+        uart_puts(c);
+        buf[idx] = c[0];
+        if (c[0] == '\n') {
             buf[idx] = '\0';
             break;
         }
