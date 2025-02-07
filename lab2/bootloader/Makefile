@@ -39,13 +39,14 @@ $(OUTPUT): $(ELF)
 clean:
 	rm -rf $(BUILD_DIR) $(ELF) $(OUTPUT)
 
-qemu:
-	qemu-system-aarch64 -M raspi3b -kernel $(OUTPUT) -serial null -serial stdio -display none -initrd $(CPIO_ARCHIVE) -dtb $(DT_ARCHIVE)
+QEMU = qemu-system-aarch64
+QEMUFLAGS = -M raspi3b -kernel $(OUTPUT) -serial null -display none -initrd $(CPIO_ARCHIVE) -dtb $(DT_ARCHIVE)
 
-qemu-pty:
-	qemu-system-aarch64 -M raspi3b -kernel $(OUTPUT) -serial null -serial pty -display none -initrd $(CPIO_ARCHIVE) -dtb $(DT_ARCHIVE)
+QEMUFLAGS += $(if $(findstring PTY,$(MAKECMDGOALS)), -serial pty, -serial stdio)
+QEMUFLAGS += $(if $(findstring GDB,$(MAKECMDGOALS)), -S -s,)
 
-gdb:
-	qemu-system-aarch64 -M raspi3b -kernel $(OUTPUT) -serial null -serial stdio -display none -S -s -initrd $(CPIO_ARCHIVE) -dtb $(DT_ARCHIVE)
+run:
+	$(QEMU) $(QEMUFLAGS)
+
 
 .PHONY: all clean
