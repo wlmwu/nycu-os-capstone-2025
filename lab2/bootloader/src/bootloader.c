@@ -3,6 +3,8 @@
 extern unsigned long _start;
 extern unsigned long _end;
 
+extern fdt_header_t *g_fdt_header_start;
+
 void bootloader_run() {
     void (*loadfptr)() = bootloader_load;
     bootloader_relocate();
@@ -33,7 +35,7 @@ void bootloader_load() {
     uart_puts("Kernel loaded successfully...\n");
 
     // Jump to the kernel
-    ((void (*)()) kernel)();
+    ((void (*)()) kernel)((void*)g_fdt_header_start);
 }
 
 void bootloader_relocate() {

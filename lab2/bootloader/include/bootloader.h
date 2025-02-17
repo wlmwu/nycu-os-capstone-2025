@@ -2,6 +2,7 @@
 #define BOOTLOADER_H_
 
 #include "mini_uart.h"
+#include "fdt.h"
 #include "utils.h"
 
 #define BOOTLOADER_LOAD_ADDR 0x100000
