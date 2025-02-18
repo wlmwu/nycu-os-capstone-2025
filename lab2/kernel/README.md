@@ -1,44 +1,42 @@
-# Lab1: Hello World
+# Kernel Project
 
-## Running with QEMU
+## Build Instructions
 
-To run the program using QEMU, follow these steps:
+To build the kernel, simply run:
 
-1. Build the program:
+```bash
+make
+```
 
-   ```bash
-   make
-   ```
+This will compile the kernel and produce the final bootloader image (`kernel8.img`).
 
-2. Run the program with QEMU:
+## Running the  Kernel
 
-   ```bash
-   make qemu
-   ```
+## Run with QEMU
 
-## Running on Raspberry Pi 3
+To run the bootloader kernel using QEMU, simply run:
 
-To run the program on a Raspberry Pi 3, follow these steps:
+```bash
+make run
+```
 
-1. Build the program:
+### Run with QEMU and GDB
 
-   ```bash
-   make
-   ```
-
-2. Prepare the SD card:
-   - Copy the `kernel8.img` file to the SD card.
-   - The SD card should already contain the following files (you can retrieve them from `nycuos.img` in lab0):
-     - `bootcode.bin`
-     - `start.elf`
-     - `fixup.dat`
-
-3. Insert the SD card into your Raspberry Pi 3.
-
-4. Open a terminal and connect to the Raspberry Pi 3 via serial:
+1. For debugging, you can run the kernel in QEMU and connect to it using GDB. Use the following command to start the simulation and set up GDB:
 
    ```bash
-   screen /dev/tty.usbserial-0001 115200
+   make run GDB
    ```
 
-   *(Make sure to change the serial device to match your system's configuration.)*
+2. In the second window, start GDB to debug the kernel:
+
+   ```bash
+   aarch64-elf-gdb
+   ```
+   You can start debugging immediately.
+
+Alternatively, you can use the `debug.sh` script to automate the process:
+
+```bash
+./debug.sh
+```
