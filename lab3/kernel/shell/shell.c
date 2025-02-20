@@ -89,9 +89,36 @@ void command_reboot(int argc, char **argv) {
 }
 
 void command_ls(int argc, char **argv) {
-    cpio_ls(argc, argv);
+    char *pathname;
+    cpio_newc_header_t *hptr = cpio_get_start_file();
+    while (hptr) {
+        hptr = cpio_get_file(hptr, &pathname, NULL);
+        if (!pathname) {
+            break;
+        }
+        uart_puts(pathname);
+        uart_puts("\n");
+    }
 }
 
 void command_cat(int argc, char **argv) {
-    cpio_cat(argc, argv);
+    if (argc <= 1) {
+        uart_puts(" : Is a directory\n");
+        return;
+    }
+    char *target_filename = argv[1];
+    cpio_newc_header_t *hptr = cpio_get_file_by_name(target_filename);
+    if (!hptr) {
+        uart_puts(target_filename);
+        uart_puts(": No such file or directory\n");
+        return;
+    }
+
+    char *pathname;
+    char *filedata;
+    cpio_get_file(hptr, &pathname, &filedata);
+    if (filedata) {
+        uart_puts(filedata);
+        uart_puts("\n");
+    }
 }

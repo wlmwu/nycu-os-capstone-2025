@@ -48,8 +48,23 @@ typedef struct cpio_newc_header {
  */
 cpio_newc_header_t* cpio_get_file(cpio_newc_header_t *hptr, char **pathname, char **filedata);
 
-void cpio_ls(int argc, char **argv);
-void cpio_cat(int argc, char **argv);
+/**
+ * @brief Retrieves a file header from the cpio archive by filename.
+ *
+ * @param filename The name of the file to search for.
+ *
+ * @return A pointer to the cpio_newc_header_t structure for the found file,
+ *         or NULL if the file is not found or an error occurs.
+ */
+cpio_newc_header_t* cpio_get_file_by_name(char *filename);
+
+/**
+ * @brief Retrieves the header of the first file in the cpio archive.
+ *
+ * @return A pointer to the cpio_newc_header_t structure of the first file,
+ *         or NULL if an error occurs (e.g., the archive is empty or invalid).
+ */
+cpio_newc_header_t* cpio_get_start_file();
 
 void cpio_initramfs_callback(fdt32_t token, char *name, fdt32_t len, char *data);
 void cpio_init();

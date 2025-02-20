@@ -10,6 +10,9 @@ cpio_newc_header_t* cpio_get_file(cpio_newc_header_t *hptr, char **pathname, cha
     unsigned int filesize = hexstr2uint(hptr->c_filesize);
 
     *pathname = (char*)hptr + sizeof(cpio_newc_header_t);
+    if (strcmp(*pathname, CPIO_END_RECORD) == 0) {
+        *pathname = NULL;
+    }
     unsigned int offset = (unsigned int)((pathname_size + sizeof(cpio_newc_header_t) + CPIO_PAD_LEN - 1) / CPIO_PAD_LEN) * CPIO_PAD_LEN;
     *filedata = (filesize != 0) ? (char*)hptr + offset : 0;
     
@@ -19,46 +22,32 @@ cpio_newc_header_t* cpio_get_file(cpio_newc_header_t *hptr, char **pathname, cha
     return next_hptr;
 }
 
-void cpio_ls(int argc, char **argv) {
+cpio_newc_header_t* cpio_get_file_by_name(char *filename) {
     char *pathname;
-    char *filedata;
     cpio_newc_header_t *hptr = (cpio_newc_header_t*)cpio_start;
     do {
-        hptr = cpio_get_file(hptr, &pathname, &filedata);
-        if (strcmp(pathname, CPIO_END_RECORD) == 0) {
-            break;
-        }
-        uart_puts(pathname);
-        uart_puts("\n");
+        cpio_newc_header_t *nhptr = cpio_get_file(hptr, &pathname, NULL);
+        if (strcmp(pathname, filename) == 0 ||
+           (strncmp(pathname, "./", sizeof("./") - 1) == 0 && strcmp(pathname + (sizeof("./") - 1), filename) == 0)) {      // sizeof("./") is length of "./\0"
+            return hptr;
+        } else if (strcmp(pathname, CPIO_END_RECORD) == 0) {
+            return NULL;
+        } 
+        hptr = nhptr;
     } while (hptr);
+
+    return NULL;
 }
 
-void cpio_cat(int argc, char **argv) {
-    if (argc <= 1) {
-        uart_puts(" : Is a directory\n");
-        return;
-    }
-    char *target_filename = argv[1];
-    
+cpio_newc_header_t* cpio_get_start_file() {
     char *pathname;
-    unsigned int filesize;
-    char *filedata;
     cpio_newc_header_t *hptr = (cpio_newc_header_t*)cpio_start;
-    do {
-        hptr = cpio_get_file(hptr, &pathname, &filedata);
-        if (strcmp(pathname, target_filename) == 0 ||
-           (strncmp(pathname, "./", sizeof("./") - 1) == 0 && strcmp(pathname + (sizeof("./") - 1), target_filename) == 0)) {      // sizeof("./") is length of "./\0"
-            if (filedata) {
-                uart_puts(filedata);
-                uart_puts("\n");
-            }
-            break;
-        } else if (strcmp(pathname, CPIO_END_RECORD) == 0) {
-            uart_puts(target_filename);
-            uart_puts(": No such file or directory\n");
-            break;
-        } 
-    } while (hptr);
+    cpio_get_file(hptr, &pathname, NULL);
+    if (!pathname) {
+        return NULL;
+    } else {
+        return hptr;
+    }
 }
 
 void cpio_initramfs_callback(fdt32_t token, char *name, fdt32_t len, char *data) {
