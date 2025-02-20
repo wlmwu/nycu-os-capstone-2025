@@ -10,6 +10,8 @@ hang:
     b      hang                 // Secondary cores hang here in an infinite loop
 
 master:
+    bl     from_el2_to_el1
+
     ldr    x2, =__bss_start     // Load the address of the start of the .bss section
     ldr    x1, =__bss_end       // Load the address of the end of the .bss section
     sub    x1, x1, x2           // Calculate the size of the .bss section
@@ -30,5 +32,10 @@ zero_loop:
     cbnz   x1, zero_loop        // Repeat the loop if x1 != 0
     ret                         // Return when done
 
-
-
+from_el2_to_el1:
+    mov    x1, (1 << 31)        
+    msr    hcr_el2, x1          // Setting hcr_el2 bit[31] to 1 means EL1 uses aarch64
+    mov    x1, 0x3c5            // EL1h (SPSel = 1) with interrupt disabled
+    msr    spsr_el2, x1
+    msr    elr_el2, lr
+    eret                        // return to EL1
