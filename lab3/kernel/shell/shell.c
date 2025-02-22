@@ -122,3 +122,38 @@ void command_cat(int argc, char **argv) {
         uart_puts("\n");
     }
 }
+
+void command_exec(int argc, char **argv) {
+    if (argc < 2) {
+        uart_puts("Usage: exec <program.img>\n");
+        return;
+    }
+    char *target_filename = argv[1];
+    cpio_newc_header_t *hptr = cpio_get_file_by_name(target_filename);
+    if (!hptr) {
+        uart_puts(target_filename);
+        uart_puts(": No such file or directory\n");
+        return;
+    }
+
+    char *filedata;
+    cpio_get_file(hptr, NULL, &filedata);
+
+    void *stack_addr = malloc(USER_STACK_SIZE);
+    if (!stack_addr) {
+        uart_puts("Error: Failed to allocate user stack\n");
+        return;
+    }
+
+    uint64_t user_sp = (uint64_t)stack_addr + USER_STACK_SIZE;
+
+    asm volatile(
+        "msr    sp_el0, %[sp]   \n"     // Set user stack pointer
+        "msr    elr_el1, %[pc]  \n"     // Set return address to user program
+        "mov    x0, 0x3c0       \n"     // EL0t mode (i.e., using SP_EL0), interrupts disabled (P.282)
+        "msr    spsr_el1, x0    \n"
+        "eret                   \n"
+        :
+        : [sp] "r" (user_sp), [pc] "r" ((uint64_t)filedata)
+    );
+}

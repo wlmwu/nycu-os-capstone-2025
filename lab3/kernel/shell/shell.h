@@ -6,12 +6,14 @@
 #include "utils.h"
 #include "cpio.h"
 
-#define NUM_CMD 6
+#define NUM_CMD 7
 #define LEN_CMD_NAME_MAX 16
 #define LEN_CMD_HELP_MAX 128
 
 #define NUM_CMD_SEND_MAX 128
 #define NUM_CMD_RECV_MAX 128
+
+#define USER_STACK_SIZE  (4 * 1024)  // 4KB user stack
 
 typedef void (*command_fn_t)(int argc, char **argv);
 
@@ -27,6 +29,7 @@ void command_info(int, char**);
 void command_reboot(int, char**);
 void command_ls(int, char**);
 void command_cat(int, char**);
+void command_exec(int, char**);
 
 static const shell_cmd_t kCmds[NUM_CMD] = {
     {.command = "help", .help = "Print all available commands", .func = command_help},
@@ -35,6 +38,7 @@ static const shell_cmd_t kCmds[NUM_CMD] = {
     {.command = "reboot", .help = "Reboot the device", .func = command_reboot},
     {.command = "ls", .help = "List files in the root directory", .func = command_ls},
     {.command = "cat", .help = "Display file contents", .func = command_cat},
+    {.command = "exec", .help = "Execute a user program", .func = command_exec},
 };
 
 void shell_init();

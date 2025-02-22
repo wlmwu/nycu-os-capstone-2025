@@ -11,6 +11,7 @@ hang:
 
 master:
     bl     from_el2_to_el1
+    bl     set_exception_vector_table
 
     ldr    x2, =__bss_start     // Load the address of the start of the .bss section
     ldr    x1, =__bss_end       // Load the address of the end of the .bss section
@@ -39,3 +40,8 @@ from_el2_to_el1:
     msr    spsr_el2, x1
     msr    elr_el2, lr
     eret                        // return to EL1
+
+set_exception_vector_table:
+  adr x1, exception_vector_table
+  msr vbar_el1, x1
+  ret
