@@ -1,7 +1,7 @@
 #include "mailbox.h"
 
 void mbox_get_info(char* output, mbox_tag_id_t tag, unsigned int num_res) {
-    unsigned int  __attribute__((aligned(32))) buf[LEN_MBOX_RESPONSE_MAX];  // buffer require padding to 32 bits
+    unsigned int  __attribute__((aligned(16))) buf[LEN_MBOX_RESPONSE_MAX];  // Mailbox gets only upper 28 bits as the address (lower 4 bits is channel). `aligned(16)` is to ensure the start address is `0x...0000`.
     buf[0] = LEN_MBOX_RESPONSE_MAX * 4;     // buffer size in bytes
     buf[1] = kRCodeRequest;                 // buffer request/response code
                                             // sequence of concatenated tags
