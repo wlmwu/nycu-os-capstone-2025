@@ -150,8 +150,9 @@ void command_exec(int argc, char **argv) {
     asm volatile(
         "msr    sp_el0, %[sp]   \n"     // Set user stack pointer
         "msr    elr_el1, %[pc]  \n"     // Set return address to user program
-        "mov    x0, 0x3c0       \n"     // EL0t mode (i.e., using SP_EL0), interrupts disabled (P.282)
-        "msr    spsr_el1, x0    \n"
+        // "mov    x0, 0x3c0       \n"     // EL0t mode (i.e., using SP_EL0), interrupts disabled (P.282)
+        // "msr    spsr_el1, x0    \n"
+        "msr    spsr_el1, xzr   \n"     // interrupts enabled
         "eret                   \n"
         :
         : [sp] "r" (user_sp), [pc] "r" ((uint64_t)filedata)

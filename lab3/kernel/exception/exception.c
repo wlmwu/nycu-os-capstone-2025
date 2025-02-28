@@ -33,7 +33,33 @@ void el0t_64_sync_handler(void *regs) {
     uart_puts((char*)uint2hexstr(NULL, (unsigned int)esr_el1));
     uart_puts("\n\n");
 }
-void el0t_64_irq_handler(void *regs) {}
+void el0t_64_irq_handler(void *regs) {
+    const int kTimeoutSeconds = 2;
+
+    unsigned long cntpct, cntfrq;
+    asm volatile(
+        "mrs %[pct], cntpct_el0\n\t"                // Get the timer's current count (total number of ticks since system boot)
+        "mrs %[frq], cntfrq_el0"                    // Read the timer frequency
+        : [pct] "=r"(cntpct), [frq] "=r"(cntfrq) 
+    );
+
+    unsigned int current_time = cntpct / cntfrq;    // The time (in second) passed since system boot
+    uart_puts("Time passed after booting: ");
+    uart_putu(current_time);
+    uart_puts(" secs\n");
+
+    unsigned long timeout_value = cntfrq * kTimeoutSeconds;  
+    
+    asm volatile(
+        "msr    cntp_tval_el0, %[tval]     \n"      // Set the next expiration time
+        "ldr    x1, =0x40000040            \n"      // 0x40000040: Core 0 Timers interrupt control
+        "mov    w0, #2                     \n"
+        "str    w0, [x1]                   \n"
+        :
+        : [tval] "r" (timeout_value)
+    );
+    
+}
 void el0t_64_fiq_handler(void *regs) {}
 void el0t_64_error_handler(void *regs) {}
 

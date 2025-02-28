@@ -12,6 +12,7 @@ hang:
 master:
     bl     from_el2_to_el1
     bl     set_exception_vector_table
+    bl     core_timer_enable
 
     ldr    x2, =__bss_start     // Load the address of the start of the .bss section
     ldr    x1, =__bss_end       // Load the address of the end of the .bss section
@@ -42,6 +43,18 @@ from_el2_to_el1:
     eret                        // return to EL1
 
 set_exception_vector_table:
-  adr x1, exception_vector_table
-  msr vbar_el1, x1
-  ret
+    adr    x1, exception_vector_table
+    msr    vbar_el1, x1
+    ret
+
+core_timer_enable:
+    mov    x2, 1
+    msr    cntp_ctl_el0, x2     // Timer enabled
+    mrs    x2, cntfrq_el0
+    msr    cntp_tval_el0, x2    // Set expired time (cntp_tval_el0 is equal to cntfrq_el0 => 1 second interrupt)
+
+    mov    x2, 2                
+    ldr    x1, =0x40000040      // 0x40000040: Core 0 Timers interrupt control
+    str    w2, [x1]             // w2: lower 32 bits of x2.
+                                // Set b'10 to address 0x40000040 => nCNTPNSIRQ IRQ enabled.
+    ret
