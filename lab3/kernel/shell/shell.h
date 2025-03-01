@@ -1,11 +1,6 @@
 #ifndef SHELL_H_
 #define SHELL_H_
 
-#include "mini_uart.h"
-#include "mailbox.h"
-#include "utils.h"
-#include "cpio.h"
-
 #define NUM_CMD 7
 #define LEN_CMD_NAME_MAX 16
 #define LEN_CMD_HELP_MAX 128

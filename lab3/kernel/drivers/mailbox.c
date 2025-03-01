@@ -1,4 +1,6 @@
 #include "mailbox.h"
+#include "bcm2873/reg_mailbox.h"
+#include "utils.h"
 
 void mbox_get_info(char* output, mbox_tag_id_t tag, unsigned int num_res) {
     unsigned int  __attribute__((aligned(16))) buf[LEN_MBOX_RESPONSE_MAX];  // Mailbox gets only upper 28 bits as the address (lower 4 bits is channel). `aligned(16)` is to ensure the start address is `0x...0000`.

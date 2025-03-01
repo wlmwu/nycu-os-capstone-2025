@@ -1,4 +1,6 @@
 #include "cpio.h"
+#include "utils.h"
+#include "mini_uart.h"
 
 static void *cpio_start;
 

@@ -1,4 +1,8 @@
 #include "mini_uart.h"
+#include "bcm2873/reg_gpio.h"
+#include "bcm2873/reg_uart.h"
+#include "utils.h"
+#include <stdarg.h>
 
 static void delay(unsigned int clock) {
     while (clock--) {

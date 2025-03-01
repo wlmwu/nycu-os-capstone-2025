@@ -1,4 +1,7 @@
 #include "fdt.h"
+#include "mini_uart.h"
+#include "utils.h"
+#include <stddef.h>
 
 static fdt_header_t *fdt_header_start;
 

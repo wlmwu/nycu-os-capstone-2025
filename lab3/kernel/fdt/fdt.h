@@ -1,10 +1,7 @@
 #ifndef FDT_H_
 #define FDT_H_
 
-#include "mini_uart.h"
-#include "utils.h"
 #include <stdint.h>
-#include <stddef.h>
 
 // https://github.com/torvalds/linux/blob/master/scripts/dtc/libfdt/libfdt_env.h
 

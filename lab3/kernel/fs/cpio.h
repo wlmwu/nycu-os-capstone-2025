@@ -1,8 +1,6 @@
 #ifndef CPIO_H_
 #define CPIO_H_
 
-#include "utils.h"
-#include "mini_uart.h"
 #include "fdt.h"
 #include <stdint.h>
 

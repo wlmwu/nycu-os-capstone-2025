@@ -1,7 +1,3 @@
-#include "mini_uart.h"
-#include <stdint.h>
-#include <stddef.h>
-
 void el1t_64_sync_handler(void *regs);
 void el1t_64_irq_handler(void *regs);
 void el1t_64_fiq_handler(void *regs);

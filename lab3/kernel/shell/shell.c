@@ -1,4 +1,8 @@
 #include "shell.h"
+#include "mini_uart.h"
+#include "mailbox.h"
+#include "utils.h"
+#include "cpio.h"
 
 void shell_init() {
     uart_puts(kWelcomeMsg);

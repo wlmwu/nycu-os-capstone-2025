@@ -1,4 +1,7 @@
 #include "exception.h"
+#include "mini_uart.h"
+#include <stdint.h>
+#include <stddef.h>
 
 void el1t_64_sync_handler(void *regs) {}
 void el1t_64_irq_handler(void *regs) {}
@@ -23,15 +26,10 @@ void el0t_64_sync_handler(void *regs) {
     );
 
     // Print register values
-    uart_puts("SPSR_EL1: 0x");
-    uart_puts((char*)uint2hexstr(NULL, (unsigned int)spsr_el1));
+    uart_printf("SPSR_EL1:\t%p\n", spsr_el1);
+    uart_printf("ELR_EL1:\t%p\n", elr_el1);
+    uart_printf("ESR_EL1:\t%p\n", esr_el1);
     uart_puts("\n");
-    uart_puts("ELR_EL1: 0x");
-    uart_puts((char*)uint2hexstr(NULL, (unsigned int)elr_el1));
-    uart_puts("\n");
-    uart_puts("ESR_EL1: 0x");
-    uart_puts((char*)uint2hexstr(NULL, (unsigned int)esr_el1));
-    uart_puts("\n\n");
 }
 void el0t_64_irq_handler(void *regs) {
     const int kTimeoutSeconds = 2;
