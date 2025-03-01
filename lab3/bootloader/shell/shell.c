@@ -19,16 +19,30 @@ void shell_run() {
 
 void shell_cmd_read(char* buf) {
     char c[] = "\0\0";
-    int idx = -1;
-    while (idx++ < NUM_CMD_RECV_MAX) {
+    int idx = 0;
+    while (idx < NUM_CMD_RECV_MAX) {
         c[0] = uart_recv();
-        uart_puts(c);
-        buf[idx] = c[0];
-        if (c[0] == '\n') {
-            buf[idx] = '\0';
+        
+        if (c[0] == '\n') {                     // Enter
             break;
+        } else if (c[0] == 8 || c[0] == 127) {  // Backspace
+            if (idx > 0) {
+                uart_puts("\033[1D \033[1D");       // '\033[1D' moves cursor back, ' ' erases the character, '\033[1D' moves back again
+                idx--;
+            }
+        } else if (c[0] == 21) {                // Ctrl-U
+            uart_puts("\033[2K");                   // Clear line output
+            uart_puts("\r# ");                      // Reset the cursor
+            idx = 0;
+        } else {
+            buf[idx] = c[0];
+            idx++;
         }
+
+        uart_puts(c);
     }
+    uart_puts("\n");
+    buf[idx] = '\0'; 
 }
 
 void shell_cmd_parse(char* buf) {
