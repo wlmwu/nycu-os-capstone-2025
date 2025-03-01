@@ -78,38 +78,27 @@ unsigned int hexstr2uint(char *hex) {
     return result;
 }
 
-void itos(char* output, unsigned long value, int base) {
-    char* ptr = output;
-    char* end = output; // To reverse the result later
+char* itos(unsigned long value, int base) {
+    static char buf[32];  // Static buffer to hold the string
+    char* ptr = &buf[31]; // Start from the end of the buffer
+    *ptr = '\0';          // Null-terminate the string
 
-    if (base < 2 || base > 36) {
-        return; // Invalid base
-    }
+    if (base < 2 || base > 36) return buf; // Invalid base, return empty string
 
-    // Handle 0 as a special case
+    // Special case for 0
     if (value == 0) {
-        *end++ = '0';
-        *end = '\0';
-        return;
+        *--ptr = '0';
+        return ptr;
     }
 
-    // Convert the number to the specified base
+    // Convert number to string
     while (value > 0) {
         unsigned long remainder = value % base;
-        *end++ = (remainder < 10) ? '0' + remainder : 'a' + (remainder - 10);
+        *--ptr = (remainder < 10) ? '0' + remainder : 'a' + (remainder - 10);
         value /= base;
     }
 
-    *end = '\0'; // Null-terminate the string
-
-    // Reverse the string in-place
-    char* start = output;
-    end--; // Move back to the last character
-    while (start < end) {
-        char temp = *start;
-        *start++ = *end;
-        *end-- = temp;
-    }
+    return ptr;  // Return pointer to the converted number
 }
 
 char *strchr(const char *str, char c) {

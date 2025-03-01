@@ -105,16 +105,16 @@ unsigned int hexstr2uint(char *hex);
 #define LEN_U32_STR 8
 
 /**
- * @param output A pointer to a character array where the converted string will be stored.
- *               The array should be large enough to store the digits of the number, 
- *               the null terminator, and possible characters for the base.
- * @param value  The unsigned long integer to be converted to a string.
- * @param base   The numeric base for the conversion (e.g., 10 for decimal, 16 for hexadecimal).
- *               Valid values are between 2 and 36.
+ * Converts an unsigned long integer to a string in the specified base.
  * 
- * @return void This function does not return a value, it directly modifies the `output` array.
+ * @param value The unsigned long integer to convert.
+ * @param base  The numeric base for conversion (e.g., 10 for decimal, 16 for hexadecimal).
+ *              Valid values are between 2 and 36.
+ * 
+ * @return A pointer to a static character buffer containing the converted string.
+ *         The buffer is overwritten on each call, so its contents should be used immediately.
  */
-void itos(char* output, unsigned long value, int base);
+char* itos(unsigned long value, int base);
 
 void* malloc(size_t size);
 

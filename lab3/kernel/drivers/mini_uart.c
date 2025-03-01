@@ -50,9 +50,7 @@ void uart_puts(const char* str) {
 }
 
 void uart_putu(const unsigned int num) {
-    char ssize[33];     /* 4 bytes + '\0' */
-    itos(ssize, num, 10);
-    uart_puts(ssize);
+    uart_puts(itos(num, 10));
 }
 
 char uart_getc() {
@@ -69,4 +67,64 @@ unsigned int uart_getu() {
     }
 
     return *((unsigned int*)buf);
+}
+
+void uart_printf(const char* format, ...) {
+    va_list args;
+    va_start(args, format);
+
+    while (*format) {
+        if (*format == '%') {
+            format++; // Move past '%'
+
+            switch (*format) {
+                case 'd': {  // Signed integer
+                    int val = va_arg(args, int);
+                    if (val < 0) {
+                        uart_putc('-');
+                        val = -val;
+                    }
+                    uart_puts(itos((unsigned int)val, 10));
+                    break;
+                }
+                case 'u': {  // Unsigned integer
+                    uart_puts(itos(va_arg(args, unsigned int), 10));
+                    break;
+                }
+                case 'x': {  // Hexadecimal
+                    uart_puts("0x");
+                    uart_puts(itos(va_arg(args, unsigned int), 16));
+                    break;
+                }
+                case 'p': {  // Pointer (Hexadecimal with 0x prefix)
+                    uart_puts("0x");
+                    uart_puts(itos((unsigned long)va_arg(args, void*), 16));
+                    break;
+                }
+                case 's': {  // String
+                    uart_puts(va_arg(args, char*));
+                    break;
+                }
+                case 'c': {  // Character
+                    uart_putc((char)va_arg(args, int));
+                    break;
+                }
+                case '%': {  // Literal '%'
+                    uart_putc('%');
+                    break;
+                }
+                default: {  // Unknown format specifier, just print it
+                    uart_putc('%');
+                    uart_putc(*format);
+                    break;
+                }
+            }
+        } else {  // Normal character
+            if (*format == '\n') uart_putc('\r');  // Convert LF to CRLF
+            uart_putc(*format);
+        }
+        format++;
+    }
+
+    va_end(args);
 }
