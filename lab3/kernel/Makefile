@@ -24,7 +24,7 @@ all: clean $(OUTPUT)
 
 $(BUILD_DIR)/%.o: %.S
 	@mkdir -p $(@D)
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) $(INCLUDE_FLAGS) -c $< -o $@
 
 $(BUILD_DIR)/%.o: %.c
 	@mkdir -p $(@D)

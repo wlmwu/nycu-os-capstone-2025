@@ -50,11 +50,4 @@ set_exception_vector_table:
 core_timer_enable:
     mov    x2, 1
     msr    cntp_ctl_el0, x2     // Timer enabled
-    mrs    x2, cntfrq_el0
-    msr    cntp_tval_el0, x2    // Set expired time (cntp_tval_el0 is equal to cntfrq_el0 => 1 second interrupt)
-
-    mov    x2, 2                
-    ldr    x1, =0x40000040      // 0x40000040: Core 0 Timers interrupt control
-    str    w2, [x1]             // w2: lower 32 bits of x2.
-                                // Set b'10 to address 0x40000040 => nCNTPNSIRQ IRQ enabled.
     ret

@@ -3,6 +3,7 @@
 #include "mailbox.h"
 #include "utils.h"
 #include "cpio.h"
+#include "timer.h"
 
 void shell_init() {
     uart_puts(kWelcomeMsg);
@@ -165,6 +166,8 @@ void command_exec(int argc, char **argv) {
 
     uint64_t user_sp = (uint64_t)stack_addr + USER_STACK_SIZE;
 
+    timer_irq_enable();
+    
     asm volatile(
         "msr    sp_el0, %[sp]   \n"     // Set user stack pointer
         "msr    elr_el1, %[pc]  \n"     // Set return address to user program

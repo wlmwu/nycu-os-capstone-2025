@@ -1,8 +1,15 @@
 #include "mini_uart.h"
 #include "bcm2873/reg_gpio.h"
 #include "bcm2873/reg_uart.h"
+#include "bcm2873/reg_interrupt.h"
+
 #include "utils.h"
+#include "ringbuffer.h"
+
 #include <stdarg.h>
+
+static ring_buffer_t *uart_rx_buffer;
+static ring_buffer_t *uart_tx_buffer;
 
 static void delay(unsigned int clock) {
     while (clock--) {
@@ -34,10 +41,17 @@ void uart_init() {
     *AUX_MU_BAUD_REG = 270u;
     *AUX_MU_IIR_REG = 6u;
     *AUX_MU_CNTL_REG = 3u;
+
+    uart_irq_enable();
+
+    static char rxbuf[UART_BUFFER_SIZE];
+    static char txbuf[UART_BUFFER_SIZE];
+    uart_rx_buffer = ring_buffer_init(rxbuf, UART_BUFFER_SIZE);
+    uart_tx_buffer = ring_buffer_init(txbuf, UART_BUFFER_SIZE);
 }
 
 char uart_recv() {
-    char c = uart_getc();
+    char c = uart_async_getc();
     return c == '\r' ? '\n' : c;
 }
 
@@ -48,8 +62,8 @@ void uart_putc(const char c) {
 
 void uart_puts(const char* str) {
     while (*str) {
-        if (*str == '\n') uart_putc('\r');
-        uart_putc(*str++);
+        if (*str == '\n') uart_async_putc('\r');
+        uart_async_putc(*str++);
     }
 }
 
@@ -85,7 +99,7 @@ void uart_printf(const char* format, ...) {
                 case 'd': {  // Signed integer
                     int val = va_arg(args, int);
                     if (val < 0) {
-                        uart_putc('-');
+                        uart_puts("-");
                         val = -val;
                     }
                     uart_puts(itos((unsigned int)val, 10));
@@ -110,25 +124,71 @@ void uart_printf(const char* format, ...) {
                     break;
                 }
                 case 'c': {  // Character
-                    uart_putc((char)va_arg(args, int));
+                    uart_async_putc((char)va_arg(args, int));
                     break;
                 }
                 case '%': {  // Literal '%'
-                    uart_putc('%');
+                    uart_puts("%");
                     break;
                 }
                 default: {  // Unknown format specifier, just print it
-                    uart_putc('%');
-                    uart_putc(*format);
+                    uart_puts("%");
+                    uart_async_putc(*format);
                     break;
                 }
             }
         } else {  // Normal character
-            if (*format == '\n') uart_putc('\r');  // Convert LF to CRLF
-            uart_putc(*format);
+            if (*format == '\n') uart_async_putc('\r');  // Convert LF to CRLF
+            uart_async_putc(*format);
         }
         format++;
     }
 
     va_end(args);
+}
+
+
+void uart_irq_enable() {
+    *AUX_MU_IER_REG |= 0b10;        // Enable transmit interrupts
+    *AUX_MU_IER_REG |= 0b01;        // Enable receive interrupts
+    *ENABLE_IRQS_1 |= (1 << 29);    // Enable AUX int
+}
+
+void uart_irq_disable() {
+    *AUX_MU_IER_REG &= ~(0b10);     // Disable transmit interrupt
+    *AUX_MU_IER_REG &= ~(0b01);     // Disable receive interrupt
+    *ENABLE_IRQS_1 &= ~(1 << 29);   // Disable AUX int
+}
+
+void uart_async_putc(const char c) {
+    ring_buffer_enqueue(uart_tx_buffer, c);
+    *AUX_MU_IER_REG |= 0b10;        // Enable transmit interrupts
+}
+
+char uart_async_getc() {
+    char c;
+    *AUX_MU_IER_REG |= 0b01;        // Enable receive interrupts
+    while (!ring_buffer_dequeue(uart_rx_buffer, &c)) {}
+    return c;
+}
+
+void uart_irq_handle() {
+    if(*AUX_MU_IIR_REG & 0b010) {                   // Transmit holding register empty
+        if (ring_buffer_is_empty(uart_tx_buffer)) {
+            *AUX_MU_IER_REG &= ~(0b10);                 // Disable transmit interrupt
+        } else {
+            char c;
+            ring_buffer_dequeue(uart_tx_buffer, &c);
+            uart_putc(c);
+        }
+    } else if(*AUX_MU_IIR_REG & 0b100) {            // Receiver holds valid byte
+        if (ring_buffer_is_full(uart_rx_buffer)) {
+            *AUX_MU_IER_REG &= ~(0b01);                 // Disable receive interrupt
+        } else {
+            char c = uart_getc();
+            ring_buffer_enqueue(uart_rx_buffer, c);
+        }
+    } else {
+        uart_printf("UART IRQ unknown\n");
+    }
 }
