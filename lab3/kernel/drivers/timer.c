@@ -1,8 +1,19 @@
 #include "timer.h"
 #include "mini_uart.h"
 #include "utils.h"
+#include "priority_queue.h"
+#include <stdbool.h>
 
-static LIST_HEAD(timer_event_list);
+static priority_queue_t *timer_event_queue;
+
+static bool timer_event_comp(void *newn, void *n) {
+    return ((timer_event_t*)newn)->expire_tick < ((timer_event_t*)n)->expire_tick;
+}
+
+void timer_init() {
+    timer_event_queue = (priority_queue_t*)malloc(sizeof(priority_queue_t));
+    pq_init(timer_event_queue, timer_event_comp);
+}
 
 void timer_set_tick(uint64_t tick) {
     asm volatile (
@@ -29,22 +40,19 @@ void timer_irq_handle() {
     timer_irq_disable();
 
     uint64_t current_tick = timer_get_current_tick();
-
-    timer_event_t *event, *nxt;
-    // Used list_for_each_entry without _safe, deleting event inside the loop would cause 
-    // invalid memory access when trying to access event->list.next in the next iteration.
-    list_for_each_entry_safe(event, nxt, &timer_event_list, node) {
+    while (!pq_empty(timer_event_queue)) {
+        timer_event_t *event = (timer_event_t*)pq_top(timer_event_queue);
         if (event->expire_tick > current_tick) {
             break;
+        } else {
+            event->callback(event->args);
+            pq_pop(timer_event_queue);
+            timer_event_destruct(event);
         }
-        event->callback(event->args);
-        list_del(&event->node);
-        free(event->args);
-        free(event);
     }
 
-    if (!list_empty(&timer_event_list)) {
-        event = list_entry(timer_event_list.next, timer_event_t, node);
+    if (!pq_empty(timer_event_queue)) {
+        timer_event_t *event = (timer_event_t*)pq_top(timer_event_queue);
         timer_set_tick(event->expire_tick);
         timer_irq_enable();
     }
@@ -69,39 +77,38 @@ uint64_t timer_tick_to_second(uint64_t tick) {
     return tick/cntfrq;
 }
 
-void timer_add_event(timer_callback_fn_t fn, void *args, size_t argsize, uint64_t duration) {
+timer_event_t* timer_event_construct(timer_callback_fn_t fn, void *args, size_t argsize, uint64_t expire_tick) {
     timer_event_t *event = (timer_event_t*)malloc(sizeof(timer_event_t));
-    INIT_LIST_HEAD(&event->node);
     event->callback = fn;
-    event->expire_tick = timer_second_to_tick(duration) + timer_get_current_tick();
+    event->expire_tick = expire_tick;
     if (args && argsize > 0) {
         event->args = malloc(argsize);
         if (!event->args) {
             uart_printf("Memory allocation for args failed\n");
             free(event);
-            return;
+            return NULL;
         }
         memcpy(event->args, args, argsize);
     } else {
         event->args = NULL;
     }
+    return event;
+}
 
-    timer_event_t *pos;
-    list_for_each_entry(pos, &timer_event_list, node) {
-        if (event->expire_tick < pos->expire_tick) {
-            list_add_tail(&event->node, &pos->node);
-            break;
-        }
-    }
+void timer_event_destruct(timer_event_t *event) {
+    free(event->args);
+    free(event);
+}
 
-    // pos == head : loop execute until the end
-    if (&(pos->node) == &timer_event_list) {
-        list_add_tail(&event->node, &timer_event_list);
-    }
+void timer_add_event(timer_callback_fn_t fn, void *args, size_t argsize, uint64_t duration) {
+    uint64_t expire_tick = timer_second_to_tick(duration) + timer_get_current_tick();
+    timer_event_t *event = timer_event_construct(fn, args, argsize, expire_tick);
+
+    pq_push(timer_event_queue, (void*)event);
 
     uart_printf("Set event at %u secs, currently at %u secs.\n", timer_tick_to_second(event->expire_tick), timer_tick_to_second(timer_get_current_tick()));
-    
-    if (event == list_entry(timer_event_list.next, timer_event_t, node)) {
+
+    if (pq_top(timer_event_queue) == (void*)event) {
         timer_set_tick(event->expire_tick);
         timer_irq_enable();
     }
