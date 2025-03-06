@@ -116,7 +116,31 @@ unsigned int hexstr2uint(char *hex);
  */
 char* itos(unsigned long value, int base);
 
+/**
+ * Convert a string to an integer.
+ * 
+ * @param str: The string to convert.
+ * @param endptr: Pointer to store the address of the first invalid character (can be NULL).
+ * @param base: The numerical base (e.g., 10 for decimal, 16 for hexadecimal).
+ *
+ * @return The converted integer value.
+ */
+int stoi(const char *str, char **endptr, int base);
+
 void* malloc(size_t size);
+void free(void *ptr);
+
+/**
+ * Copy memory area. Copies `n` bytes from memory area `src` to memory area `dest`.
+ * The memory areas **must not overlap**.
+ * 
+ * @param dest: Destination memory area
+ * @param src: Source memory area
+ * @param n: Number of bytes to copy
+ *
+ * @return the original value of `dest`.
+ */
+void *memcpy(void *dest, const void *src, size_t n);
 
 #define ALIGN(val, align_len) (((val) + (align_len) - 1) / (align_len) * (align_len))
 

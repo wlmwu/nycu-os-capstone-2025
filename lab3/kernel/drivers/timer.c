@@ -1,16 +1,14 @@
 #include "timer.h"
 #include "mini_uart.h"
+#include "utils.h"
 
-void timer_set_time(unsigned int second) {
-    unsigned long cntpct, cntfrq;
-    asm volatile(
-        "mrs %[pct], cntpct_el0\n\t"                // Get the timer's current count (total number of ticks since system boot)
-        "mrs %[frq], cntfrq_el0"                    // Read the timer frequency
-        : [pct] "=r"(cntpct), [frq] "=r"(cntfrq) 
+static LIST_HEAD(timer_event_list);
+
+void timer_set_tick(uint64_t tick) {
+    asm volatile (
+        "msr cntp_cval_el0, %[tick]        \n"      //cntp_cval_el0: absolute timer
+        :: [tick] "r" (tick)
     );
-
-    unsigned long timeout_value = cntfrq * second;  
-    asm volatile("msr    cntp_tval_el0, %[tval]" : : [tval] "r" (timeout_value));  // Set the next expiration time
 }
 
 void timer_irq_enable() {
@@ -28,17 +26,84 @@ void timer_irq_disable() {
 }
 
 void timer_irq_handle() {
-    const int kTimeoutSeconds = 2;
+    timer_irq_disable();
 
-    unsigned long cntpct, cntfrq;
-    asm volatile(
-        "mrs %[pct], cntpct_el0\n\t"                // Get the timer's current count (total number of ticks since system boot)
-        "mrs %[frq], cntfrq_el0"                    // Read the timer frequency
-        : [pct] "=r"(cntpct), [frq] "=r"(cntfrq) 
-    );
+    uint64_t current_tick = timer_get_current_tick();
 
-    unsigned int current_time = cntpct / cntfrq;    // The time (in second) passed since system boot
-    uart_printf("Time passed after booting: %u secs\n", current_time);
+    timer_event_t *event, *nxt;
+    // Used list_for_each_entry without _safe, deleting event inside the loop would cause 
+    // invalid memory access when trying to access event->list.next in the next iteration.
+    list_for_each_entry_safe(event, nxt, &timer_event_list, node) {
+        if (event->expire_tick > current_tick) {
+            break;
+        }
+        event->callback(event->args);
+        list_del(&event->node);
+        free(event->args);
+        free(event);
+    }
 
-    timer_set_time(kTimeoutSeconds);
+    if (!list_empty(&timer_event_list)) {
+        event = list_entry(timer_event_list.next, timer_event_t, node);
+        timer_set_tick(event->expire_tick);
+        timer_irq_enable();
+    }
+}
+
+uint64_t timer_get_current_tick() {
+    uint64_t cntpct;
+    asm volatile("mrs %[pct], cntpct_el0\n\t" : [pct] "=r"(cntpct));    // Get the timer's current count (total number of ticks since system boot)
+    return cntpct;
+}
+
+uint64_t timer_second_to_tick(uint64_t second) {
+    uint64_t cntfrq;
+    asm volatile("mrs %[frq], cntfrq_el0" : [frq] "=r"(cntfrq) );       // Read the timer frequency
+    uint64_t timeout_value = cntfrq * second;  
+    return timeout_value;
+}
+
+uint64_t timer_tick_to_second(uint64_t tick) {
+    uint64_t cntfrq;
+    asm volatile("mrs %[frq], cntfrq_el0" : [frq] "=r"(cntfrq) );       // Read the timer frequency
+    return tick/cntfrq;
+}
+
+void timer_add_event(timer_callback_fn_t fn, void *args, size_t argsize, uint64_t duration) {
+    timer_event_t *event = (timer_event_t*)malloc(sizeof(timer_event_t));
+    INIT_LIST_HEAD(&event->node);
+    event->callback = fn;
+    event->expire_tick = timer_second_to_tick(duration) + timer_get_current_tick();
+    if (args && argsize > 0) {
+        event->args = malloc(argsize);
+        if (!event->args) {
+            uart_printf("Memory allocation for args failed\n");
+            free(event);
+            return;
+        }
+        memcpy(event->args, args, argsize);
+    } else {
+        event->args = NULL;
+    }
+
+    timer_event_t *pos;
+    list_for_each_entry(pos, &timer_event_list, node) {
+        if (event->expire_tick < pos->expire_tick) {
+            list_add_tail(&event->node, &pos->node);
+            break;
+        }
+    }
+
+    // pos == head : loop execute until the end
+    if (&(pos->node) == &timer_event_list) {
+        list_add_tail(&event->node, &timer_event_list);
+    }
+
+    uart_printf("Set event at %u secs, currently at %u secs.\n", timer_tick_to_second(event->expire_tick), timer_tick_to_second(timer_get_current_tick()));
+    
+    if (event == list_entry(timer_event_list.next, timer_event_t, node)) {
+        timer_set_tick(event->expire_tick);
+        timer_irq_enable();
+    }
+    
 }

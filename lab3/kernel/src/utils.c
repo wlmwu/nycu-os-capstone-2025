@@ -101,6 +101,37 @@ char* itos(unsigned long value, int base) {
     return ptr;  // Return pointer to the converted number
 }
 
+int stoi(const char *str, char **endptr, int base) {
+    int result = 0;
+    int sign = 1;
+
+    // Skip leading whitespaces
+    while (*str == ' ' || *str == '\t' || *str == '\n' || *str == '\r') {
+        str++;
+    }
+
+    // Handle optional '+' or '-'
+    if (*str == '-') {
+        sign = -1;
+        str++;
+    } else if (*str == '+') {
+        str++;
+    }
+
+    // Convert digits
+    while (*str >= '0' && *str <= '9') {
+        result = result * base + (*str - '0');
+        str++;
+    }
+
+    // Set endptr if needed
+    if (endptr) {
+        *endptr = (char *)str;
+    }
+
+    return result * sign;
+}
+
 char *strchr(const char *str, char c) {
     while (*str) {
         if (*str == c) {
@@ -184,6 +215,18 @@ void* malloc(size_t size) {
     void* ptr = alloc_ptr_start;
     alloc_ptr_start += size;  // Move the pointer forward by the allocated size
     return ptr;
+}
+void free(void *ptr) { /*Unimplemented*/ }
+
+void *memcpy(void *dest, const void *src, size_t n) {
+    unsigned char *d = (unsigned char *)dest;
+    const unsigned char *s = (const unsigned char *)src;
+
+    for (size_t i = 0; i < n; i++) {
+        d[i] = s[i];
+    }
+
+    return dest;
 }
 
 uint32_t bswap32(uint32_t value) {

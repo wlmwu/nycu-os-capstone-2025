@@ -142,6 +142,12 @@ void command_cat(int argc, char **argv) {
     }
 }
 
+static void exec_timer_event(void *sec) {
+    uint64_t s = *(uint64_t*)sec;
+    uart_printf("Time passed after booting: %u secs.\n", timer_tick_to_second(timer_get_current_tick()));
+    timer_add_event(exec_timer_event, &s, sizeof(s), s);
+}
+
 void command_exec(int argc, char **argv) {
     if (argc < 2) {
         uart_puts("Usage: exec <program.img>\n");
@@ -166,7 +172,8 @@ void command_exec(int argc, char **argv) {
 
     uint64_t user_sp = (uint64_t)stack_addr + USER_STACK_SIZE;
 
-    timer_irq_enable();
+    const uint64_t kTimeoutSeconds = 2;
+    timer_add_event(exec_timer_event, &kTimeoutSeconds, sizeof(kTimeoutSeconds), kTimeoutSeconds);
     
     asm volatile(
         "msr    sp_el0, %[sp]   \n"     // Set user stack pointer
@@ -178,4 +185,19 @@ void command_exec(int argc, char **argv) {
         :
         : [sp] "r" (user_sp), [pc] "r" ((uint64_t)filedata)
     );
+}
+
+static void echoat_timer_event(void *msg) {
+    uart_printf("\nechoat: %s\n", (char*) msg);
+}
+
+void command_echoat(int argc, char** argv) {
+    if (argc < 3) {
+        uart_printf("Usage: echoat <message> <seconds>\n");
+        return;
+    }
+    char *message = argv[1];
+    uint64_t seconds = stoi(argv[2], NULL, 10);
+    
+    timer_add_event(echoat_timer_event, (void *)message, strlen(message) + 1, seconds);
 }

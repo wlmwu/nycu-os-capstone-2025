@@ -29,9 +29,9 @@ void el0t_64_sync_handler(void *regs) {
     );
 
     // Print register values
-    uart_printf("SPSR_EL1:\t%p\n", spsr_el1);
-    uart_printf("ELR_EL1:\t%p\n", elr_el1);
-    uart_printf("ESR_EL1:\t%p\n", esr_el1);
+    uart_printf("SPSR_EL1:\t%p,\t", spsr_el1);
+    uart_printf("ELR_EL1:\t%p,\t", elr_el1);
+    uart_printf("ESR_EL1:\t%p,\t", esr_el1);
     uart_puts("\n");
 }
 void el0t_64_irq_handler(void *regs) {
