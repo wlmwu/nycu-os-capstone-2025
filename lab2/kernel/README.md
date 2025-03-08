@@ -1,4 +1,4 @@
-# Kernel Project
+# Kernel
 
 ## Build Instructions
 
