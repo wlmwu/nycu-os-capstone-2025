@@ -1,7 +1,7 @@
 #ifndef REG_INTERRUPT_H_
 #define REG_INTERRUPT_H_
 
-#include "bcm2873/reg_base.h"
+#include "reg_base.h"
 
 #define IRQ_BASIC_PENDING	((volatile unsigned int*)(INTERRUPT_BASE+0x00000200))
 #define IRQ_PENDING_1		((volatile unsigned int*)(INTERRUPT_BASE+0x00000204))

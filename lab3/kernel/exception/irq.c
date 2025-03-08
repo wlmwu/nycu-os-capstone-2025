@@ -1,5 +1,5 @@
 #include "irq.h"
-#include "bcm2873/reg_interrupt.h"
+#include "reg_interrupt.h"
 #include "mini_uart.h"
 #include "timer.h"
 #include "priority_queue.h"

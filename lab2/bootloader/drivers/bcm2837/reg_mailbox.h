@@ -1,7 +1,7 @@
 #ifndef REG_MAILBOX_H_
 #define REG_MAILBOX_H_
 
-#include "bcm2873/reg_base.h"
+#include "reg_base.h"
 
 #define MAILBOX_READ     ((volatile unsigned int*)(MAILBOX_BASE+0x00))
 #define MAILBOX_STATUS   ((volatile unsigned int*)(MAILBOX_BASE+0x18))

@@ -1,7 +1,7 @@
 #ifndef MAILBOX_H_
 #define MAILBOX_H_
 
-#include "bcm2873/reg_mailbox.h"
+#include "reg_mailbox.h"
 #include "utils.h"
 
 #define LEN_MBOX_RESPONSE_MAX 8

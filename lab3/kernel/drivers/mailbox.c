@@ -1,5 +1,5 @@
 #include "mailbox.h"
-#include "bcm2873/reg_mailbox.h"
+#include "reg_mailbox.h"
 #include "utils.h"
 
 void mbox_get_info(char* output, mbox_tag_id_t tag, unsigned int num_res) {

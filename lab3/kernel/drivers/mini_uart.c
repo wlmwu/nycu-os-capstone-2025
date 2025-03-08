@@ -1,7 +1,7 @@
 #include "mini_uart.h"
-#include "bcm2873/reg_gpio.h"
-#include "bcm2873/reg_uart.h"
-#include "bcm2873/reg_interrupt.h"
+#include "reg_gpio.h"
+#include "reg_uart.h"
+#include "reg_interrupt.h"
 
 #include "utils.h"
 #include "ringbuffer.h"

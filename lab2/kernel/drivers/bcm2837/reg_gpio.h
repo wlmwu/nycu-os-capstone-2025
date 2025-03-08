@@ -1,7 +1,7 @@
 #ifndef REG_GPIO_H_
 #define REG_GPIO_H_
 
-#include "bcm2873/reg_base.h"
+#include "reg_base.h"
 
 #define GPFSEL1         ((volatile unsigned int *)(MMIO_BASE+0x00200004))
 #define GPPUD           ((volatile unsigned int *)(MMIO_BASE+0x00200094))

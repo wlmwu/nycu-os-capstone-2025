@@ -1,7 +1,7 @@
 #ifndef MINI_UART_H_
 #define MINI_UART_H_
 
-#include "bcm2873/reg_uart.h"
+#include "reg_uart.h"
 
 #define UART_BUFFER_SIZE 4096
 

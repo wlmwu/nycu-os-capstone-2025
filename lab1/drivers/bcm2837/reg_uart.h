@@ -1,7 +1,7 @@
 #ifndef REG_UART_H_
 #define REG_UART_H_
 
-#include "bcm2873/reg_base.h"
+#include "reg_base.h"
 
 #define AUX_ENABLES     ((volatile unsigned int*)(MMIO_BASE+0x00215004))
 #define AUX_MU_IO_REG   ((volatile unsigned int*)(MMIO_BASE+0x00215040))
