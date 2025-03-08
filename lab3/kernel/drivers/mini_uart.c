@@ -173,13 +173,12 @@ char uart_async_getc() {
 
 void uart_irq_handle() {
     if(*AUX_MU_IIR_REG & 0b010) {                   // Transmit holding register empty
-        if (ring_buffer_is_empty(uart_tx_buffer)) {
-            *AUX_MU_IER_REG &= ~(0b10);                 // Disable transmit interrupt
-        } else {
+        while (!ring_buffer_is_empty(uart_tx_buffer)) {
             char c;
             ring_buffer_dequeue(uart_tx_buffer, &c);
             uart_putc(c);
         }
+        *AUX_MU_IER_REG &= ~(0b10);  
     } else if(*AUX_MU_IIR_REG & 0b100) {            // Receiver holds valid byte
         if (ring_buffer_is_full(uart_rx_buffer)) {
             *AUX_MU_IER_REG &= ~(0b01);                 // Disable receive interrupt

@@ -5,7 +5,7 @@ ring_buffer_t* ring_buffer_init(char *buf, size_t buf_size) {
     if (!(RING_BUFFER_IS_POWER_OF_TWO(buf_size))) {   // Size is not power of two
         return NULL;
     }
-    static ring_buffer_t *buffer;
+    ring_buffer_t *buffer = malloc(sizeof(ring_buffer_t));
     buffer->buffer = buf;
     buffer->buffer_mask = buf_size - 1;
     buffer->tail_index = 0;
