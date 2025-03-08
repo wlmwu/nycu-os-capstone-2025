@@ -19,14 +19,14 @@ SECTIONS {
     .heap (NOLOAD) : {
         . = ALIGN(16);
         _heap_start = .;  /* Start of the heap */
-        . = . + 0x10000;  /* Allocate 64KB for the heap */
+        . = . + 4M;       /* Allocate 4MB for the heap */
         _heap_end = .;    /* End of the heap */
     }
 
     .stack (NOLOAD) : {
         . = ALIGN(16);
         _stack_start = .;       /* Mark the start of the stack */
-        . = . + 0x4000;       /* Allocate 4KB for the stack */
+        . = . + 4M;             /* Allocate 4MB for the stack */
         _stack_end = .;         /* Mark the end of the stack */
     }
 

@@ -42,7 +42,7 @@ void uart_init() {
     *AUX_MU_IIR_REG = 6u;
     *AUX_MU_CNTL_REG = 3u;
 
-    uart_irq_enable();
+    *ENABLE_IRQS_1 |= (1 << 29);    // Enable AUX int
 
     static char rxbuf[UART_BUFFER_SIZE];
     static char txbuf[UART_BUFFER_SIZE];
@@ -151,13 +151,11 @@ void uart_printf(const char* format, ...) {
 void uart_irq_enable() {
     *AUX_MU_IER_REG |= 0b10;        // Enable transmit interrupts
     *AUX_MU_IER_REG |= 0b01;        // Enable receive interrupts
-    *ENABLE_IRQS_1 |= (1 << 29);    // Enable AUX int
 }
 
 void uart_irq_disable() {
     *AUX_MU_IER_REG &= ~(0b10);     // Disable transmit interrupt
     *AUX_MU_IER_REG &= ~(0b01);     // Disable receive interrupt
-    *ENABLE_IRQS_1 &= ~(1 << 29);   // Disable AUX int
 }
 
 void uart_async_putc(const char c) {
@@ -167,8 +165,9 @@ void uart_async_putc(const char c) {
 
 char uart_async_getc() {
     char c;
-    *AUX_MU_IER_REG |= 0b01;        // Enable receive interrupts
-    while (!ring_buffer_dequeue(uart_rx_buffer, &c)) {}
+    while (!ring_buffer_dequeue(uart_rx_buffer, &c)) {
+        *AUX_MU_IER_REG |= 0b01;        // Enable receive interrupts
+    }
     return c;
 }
 

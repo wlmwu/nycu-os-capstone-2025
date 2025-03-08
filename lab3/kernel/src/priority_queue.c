@@ -21,10 +21,6 @@ void pq_push(priority_queue_t *pq, void *data) {
             list_add_tail(&new_node->list, &entry->list);
             return;
         }
-        // if (new_node->priority < entry->priority) {
-        //     list_add_tail(&new_node->list, &entry->list);
-        //     return;
-        // }
     }
 
     // If all nodes have higher/equal priority, add to the end

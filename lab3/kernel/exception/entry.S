@@ -1,6 +1,6 @@
     // save general registers to stack
     .macro save_all
-        sub sp, sp, 32 * 8
+        sub sp, sp, 34 * 8                // Allocate space for 34 registers (x0-x30 + elr_el1 + spsr_el1)
         stp x0, x1, [sp ,16 * 0]
         stp x2, x3, [sp ,16 * 1]
         stp x4, x5, [sp ,16 * 2]
@@ -17,6 +17,10 @@
         stp x26, x27, [sp ,16 * 13]
         stp x28, x29, [sp ,16 * 14]
         str x30, [sp, 16 * 15]
+
+        mrs x2, elr_el1
+        mrs x3, spsr_el1
+        stp x2, x3, [sp, 16 * 16]         // Store elr_el1/spsr_el1 for nested interrupt
     .endm
 
     // load general registers from stack
@@ -37,7 +41,11 @@
         ldp x26, x27, [sp ,16 * 13]
         ldp x28, x29, [sp ,16 * 14]
         ldr x30, [sp, 16 * 15]
-        add sp, sp, 32 * 8
+
+        ldp x2, x3, [sp, 16 * 16]         // Load elr_el1/spsr_el1 from stack
+        msr elr_el1, x2
+        msr spsr_el1, x3
+        add sp, sp, 34 * 8
     .endm
 
 

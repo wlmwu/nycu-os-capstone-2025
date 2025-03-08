@@ -45,8 +45,8 @@ void timer_irq_handle() {
         if (event->expire_tick > current_tick) {
             break;
         } else {
-            event->callback(event->args);
             pq_pop(timer_event_queue);
+            event->callback(event->args);
             timer_event_destruct(event);
         }
     }
@@ -106,7 +106,7 @@ void timer_add_event(timer_callback_fn_t fn, void *args, size_t argsize, uint64_
 
     pq_push(timer_event_queue, (void*)event);
 
-    uart_printf("Set event at %u secs, currently at %u secs.\n", timer_tick_to_second(event->expire_tick), timer_tick_to_second(timer_get_current_tick()));
+    uart_printf("Set event at %u sec, currently at %u sec.\n", timer_tick_to_second(event->expire_tick), timer_tick_to_second(timer_get_current_tick()));
 
     if (pq_top(timer_event_queue) == (void*)event) {
         timer_set_tick(event->expire_tick);

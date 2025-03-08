@@ -144,7 +144,7 @@ void command_cat(int argc, char **argv) {
 
 static void exec_timer_event(void *sec) {
     uint64_t s = *(uint64_t*)sec;
-    uart_printf("Time passed after booting: %u secs.\n", timer_tick_to_second(timer_get_current_tick()));
+    uart_printf("Time passed after booting: %u sec.\n", timer_tick_to_second(timer_get_current_tick()));
     timer_add_event(exec_timer_event, &s, sizeof(s), s);
 }
 
@@ -188,7 +188,7 @@ void command_exec(int argc, char **argv) {
 }
 
 static void echoat_timer_event(void *msg) {
-    uart_printf("\nechoat: %s\n", (char*) msg);
+    uart_printf("\nechoat: %u %s\n", timer_tick_to_second(timer_get_current_tick()) , (char*) msg);
 }
 
 void command_echoat(int argc, char** argv) {

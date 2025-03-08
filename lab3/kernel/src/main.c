@@ -9,7 +9,7 @@ int main(void* arg) {   /* The value of arg is `x0` which is 0x8200000 in QEMU, 
     uart_init();
     timer_init();
 
-    irq_enable();
+    irq_init();
     
     fdt_init(arg);
     cpio_init();

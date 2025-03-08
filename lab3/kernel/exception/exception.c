@@ -28,7 +28,8 @@ void el0t_64_sync_handler(void *regs) {
         :  // No input operands
     );
 
-    // Print register values
+    irq_enable();   // DAIF is reset to 0x3c0 after each svc.
+
     uart_printf("SPSR_EL1:\t%p,\t", spsr_el1);
     uart_printf("ELR_EL1:\t%p,\t", elr_el1);
     uart_printf("ESR_EL1:\t%p,\t", esr_el1);
