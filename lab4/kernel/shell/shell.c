@@ -15,7 +15,7 @@ void shell_init() {
 void shell_run() {
     char buf[NUM_CMD_RECV_MAX];
     while (1) {
-        arrset(buf, 0, NUM_CMD_RECV_MAX);
+        memset(buf, 0, sizeof(buf));
         uart_puts("# ");
         shell_cmd_read(buf);
         shell_cmd_parse(buf);
@@ -92,7 +92,7 @@ void command_info(int argc, char **argv) {
     uart_puts(buf);
     uart_puts("\n");
 
-    arrset(buf, 0, NUM_CMD_SEND_MAX);
+    memset(buf, 0, sizeof(buf));
 
     mbox_get_info(buf, kTagGetArmMemory, 2);
     uart_puts("ARM Memory Base Address:\t");

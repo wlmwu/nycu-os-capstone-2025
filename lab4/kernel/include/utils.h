@@ -72,13 +72,13 @@ size_t strlen(const char *str);
 int split_args(char* buf, char* argv[], int max_args);
 
 /**
- * @param ptr   - Pointer to the memory block to be filled.
- * @param value - Value to be set. Only the least significant byte is used.
- * @param num   - Number of bytes to set to the specified value.
+ * @param dest   - Pointer to the memory block to be filled.
+ * @param val - Value to be set. Only the least significant byte is used.
+ * @param len   - Number of bytes to set to the specified value.
  * 
  * @return void This function does not return any value.
 */
-void arrset(void *ptr, int value, unsigned int num);
+void *memset (void *dest, int val, size_t len);
 
 /**
  * Converts an unsigned integer to a hexadecimal string.

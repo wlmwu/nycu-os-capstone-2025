@@ -30,11 +30,11 @@ int strncmp(const char *str1, const char *str2, size_t n) {
     return 0;  // If we reached here, the first n characters are the same
 }
 
-void arrset(void *ptr, int value, unsigned int num) {
-    unsigned char *p = (unsigned char *)ptr;  // Convert the pointer to a byte-level pointer
-    for (unsigned int i = 0; i < num; i++) {
-        p[i] = (unsigned char)value;  // Set each byte to the specified value
-    }
+void *memset (void *dest, int val, size_t len) {
+  unsigned char *ptr = dest;
+  while (len-- > 0)
+    *ptr++ = val;
+  return dest;
 }
 
 void *uint2hexstr(char *output, unsigned int d) {
