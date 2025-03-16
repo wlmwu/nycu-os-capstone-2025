@@ -205,8 +205,8 @@ extern char _heap_start;  // Start of the heap
 extern char _heap_end;    // End of the heap
 static char* alloc_ptr_start = &_heap_start;  // Start of the heap region
 void* malloc(size_t size) {
-    // Ensure the allocation is aligned (e.g., 16-byte alignment)
-    size = (size + 15) & ~15;
+    // Ensure the allocation is aligned (e.g., 8-byte alignment)
+    size = (size + 7) & ~7;
 
     if (alloc_ptr_start + size > &_heap_end) {
         return NULL;  // Out of memory
