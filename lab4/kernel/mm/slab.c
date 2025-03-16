@@ -40,11 +40,11 @@ void *kmalloc(size_t size) {
     int pool_idx = pool_find(size);
     if (pool_idx < 0) {                     // Allocate a page if size is too large
         // return pfn_alloc(((size + PAGE_SIZE - 1) / PAGE_SIZE) - 1);
-        return pfn_alloc(0);
+        return page_alloc(0);
     }
 
     if (list_empty(&pools[pool_idx])) {
-        void *page = pfn_alloc(0);
+        void *page = page_alloc(0);
         if (!page) return NULL;
 
 
@@ -72,7 +72,7 @@ void *kmalloc(size_t size) {
         list_del(&slab_header->list);
     }
 
-    uart_printf("\033[0;33mAllocate chunk at %p, page %p, chunk size %u\033[0m\n", chunk, slab_header, slab_header->chunk_size);
+    // uart_printf("\033[0;33mAllocate chunk at %p, page %p, chunk size %u\033[0m\n", chunk, slab_header, slab_header->chunk_size);
 
     return chunk;
 }
@@ -82,7 +82,7 @@ void kfree(void *ptr) {
 
     uintptr_t slab_start = ((uintptr_t)ptr) & ~(PAGE_SIZE - 1);      // Mask lower bits
     if (slab_start == ((uintptr_t)ptr)) {           // ptr is the start address of a page
-        pfn_free(ptr, 0);
+        page_free(ptr, 0);
         return;
     }
 
@@ -95,13 +95,13 @@ void kfree(void *ptr) {
     int pool_idx = pool_find(slab_header->chunk_size);
     if (pool_idx < 0) return;
 
-    uart_printf("\033[0;33mFree chunk at %p, page %p, chunk size %u\033[0m\n", chunk, slab_header, slab_header->chunk_size);
+    // uart_printf("\033[0;33mFree chunk at %p, page %p, chunk size %u\033[0m\n", chunk, slab_header, slab_header->chunk_size);
 
     size_t total_chunks = (PAGE_SIZE - sizeof(slab_header_t)) / slab_header->chunk_size;
     if (slab_header->free_list_size == 1) {
         list_add_tail(&slab_header->list, &pools[pool_idx]);
     } else if (slab_header->free_list_size == total_chunks) {
         list_del(&slab_header->list);
-        pfn_free(slab_header, 0);
+        page_free(slab_header, 0);
     }
 }
