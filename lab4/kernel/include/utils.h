@@ -142,6 +142,9 @@ void free(void *ptr);
  */
 void *memcpy(void *dest, const void *src, size_t n);
 
+#define MIN(x, y) (x) < (y) ? (x) : (y)
+#define MAX(x, y) (x) > (y) ? (x) : (y)
+
 #define ALIGN(val, align_len) (((val) + (align_len) - 1) / (align_len) * (align_len))
 
 uint32_t bswap32(uint32_t value);

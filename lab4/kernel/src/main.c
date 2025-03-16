@@ -4,6 +4,7 @@
 #include "fdt.h"
 #include "irq.h"
 #include "timer.h"
+#include "memory.h"
 
 int main(void* arg) {   /* The value of arg is `x0` which is 0x8200000 in QEMU, so `*arg` is the pointer points to 0x8200000 */
     uart_init();
@@ -13,6 +14,8 @@ int main(void* arg) {   /* The value of arg is `x0` which is 0x8200000 in QEMU, 
     
     fdt_init(arg);
     cpio_init();
+    
+    memory_init();
 
     shell_init();
     shell_run();

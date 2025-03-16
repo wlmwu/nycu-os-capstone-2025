@@ -10,10 +10,29 @@
 static struct list_head free_lists[MAX_ORDER];
 
 // Coalesce in O(1)
-static unsigned char bitmap_buffer[MASK_SIZE];
+static unsigned char *bitmap_buffer;
 // 1 means free
 static unsigned char *free_masks[MAX_ORDER]; 
 
+
+static unsigned char reserved_bitmap[(MAX_PAGES + 7) / 8 * 8];
+
+void buddy_reserve(uintptr_t start, uintptr_t end) {
+    start = MAX(start, MEM_START);
+    end = MIN(end, MEM_END);
+    unsigned long start_pfn = (start - MEM_START) / PAGE_SIZE;
+    unsigned long end_pfn = (end - MEM_START + PAGE_SIZE - 1) / PAGE_SIZE;
+    uart_printf("[x] Reserve address [%x, %x), PFN [%d, %d)\033[0m\n", start, end, start_pfn, end_pfn);
+
+    for (unsigned long pfn = start_pfn; pfn < end_pfn; pfn++) {
+        reserved_bitmap[pfn / 8] |= (1 << (pfn % 8));
+    }
+}
+
+static int is_reserved(unsigned long pfn) {
+    if (pfn >= MAX_PAGES) return 1;
+    return reserved_bitmap[pfn / 8] & (1 << (pfn % 8));
+}
 
 static void *pfn_to_addr(unsigned long pfn) {
     return (void*)((pfn * PAGE_SIZE) + MEM_START);
@@ -59,6 +78,13 @@ void buddy_init() {
         INIT_LIST_HEAD(&free_lists[i]);
     }
     
+    unsigned long bitmap_size = 0;
+    for (int i = 0; i < MAX_ORDER; ++i) {
+        unsigned long num_blocks = MAX_PAGES >> i;
+        unsigned long order_make_size = (num_blocks + 7) / 8;
+        bitmap_size += order_make_size;
+    }
+    bitmap_buffer = (unsigned char*)malloc(bitmap_size);
     unsigned char *current = bitmap_buffer;
     for (int order = 0; order < MAX_ORDER; ++order) {
         unsigned int num_blocks = MAX_PAGES >> order;
@@ -66,7 +92,34 @@ void buddy_init() {
         memset(current, 0, (num_blocks + 7) / 8);
         current += (num_blocks + 7) / 8;
     }
-    free_add(MAX_ORDER - 1, 0);
+
+    unsigned long current_pfn = 0;
+    while (current_pfn < MAX_PAGES) {
+        if (is_reserved(current_pfn)) {
+            ++current_pfn;
+            continue;
+        }
+
+        int order = 0;
+        for (unsigned long i = current_pfn ; i < MAX_PAGES && order < MAX_ORDER; ++i) {
+            if (is_reserved(i)) {
+                break;
+            }
+            if (i - current_pfn + 1 == 1 << order) {
+                ++order;
+                if (IS_BLOCK_INVALID(current_pfn, order)) {
+                    break;
+                }
+            }
+        }
+        --order;
+        if (order >= 0) {
+            free_add(order, current_pfn);
+            current_pfn += 1 << order;
+        } else {
+            ++current_pfn;
+        }
+    }
 }
 
 void *pfn_alloc(int order) {
@@ -115,7 +168,7 @@ void pfn_free(void *addr, int order) {
         return;
     }
     
-    for ( ; order < MAX_ORDER; ++order) {
+    for ( ; order < MAX_ORDER - 1; ++order) {
         unsigned long buddy_pfn = BUDDY(block_pfn, order);
         if (IS_BLOCK_INVALID(buddy_pfn, order) || !mask_is_free(order, buddy_pfn)) {
             break;

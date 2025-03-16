@@ -1,6 +1,7 @@
 #include "fdt.h"
 #include "mini_uart.h"
 #include "utils.h"
+#include "memory.h"
 #include <stddef.h>
 
 static fdt_header_t *fdt_header_start;
@@ -10,6 +11,8 @@ void fdt_init(void *dtb_ptr) {
     if (bswap32(fdt_header_start->magic) != FDT_MAGIC) {
         uart_puts("Error: FDT header is invalid (incorrect magic number).\n");
         fdt_header_start = 0;
+    } else {
+        memory_reserve((uintptr_t)fdt_header_start, (uintptr_t)fdt_header_start + fdt_header_start->totalsize);
     }
 }
 
