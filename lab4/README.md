@@ -1,4 +1,4 @@
-# Lab3: Exception and Interrupt
+# Lab 4: Allocator
 
 Here implements a bootloader and a kernel. The bootloader is a kernel that loads the real kernel image, and the kernel performs essential system operations to get the device running. Additionally, a Python tool is provided for transferring the kernel image to the bootloader via UART.
 
