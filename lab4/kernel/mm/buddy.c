@@ -32,7 +32,7 @@ void buddy_reserve(uintptr_t start, uintptr_t end) {
 
 static int is_reserved(unsigned long pfn) {
     if (pfn >= MAX_PAGES) return 1;
-    return reserved_bitmap[pfn / 8] & (1 << (pfn % 8));
+    return (reserved_bitmap[pfn / 8] & (1 << (pfn % 8))) != 0;
 }
 
 static void *pfn_to_addr(unsigned long pfn) {
