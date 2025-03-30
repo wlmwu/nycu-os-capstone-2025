@@ -19,7 +19,7 @@ typedef struct slab_header {
 static struct list_head pools[NUM_POOLS];   // Each pool represents the `list_head` of the slab headers with the same chunk size
 
 
-int pool_find(size_t size) {
+static int pool_find(size_t size) {
     for (int i = 0; i < NUM_POOLS; ++i) {
         size_t chunk_size = MAX_CHUNK_SIZE >> (NUM_POOLS - i - 1);
         if (chunk_size >= size) {
@@ -29,6 +29,14 @@ int pool_find(size_t size) {
     return -1;
 }
 
+static int order_find(size_t size) {
+    size_t num_page = (size + PAGE_SIZE - 1) / PAGE_SIZE;
+    int order = 0;
+    while ((1 << order) < num_page && order < MAX_ORDER) {
+        order++;
+    }
+    return (order < MAX_ORDER) ? order : -1;
+}
 
 void slab_init() {
     for (int i = 0; i < NUM_POOLS; ++i) {
@@ -38,9 +46,9 @@ void slab_init() {
 
 void *kmalloc(size_t size) {
     int pool_idx = pool_find(size);
-    if (pool_idx < 0) {                     // Allocate a page if size is too large
-        // return pfn_alloc(((size + PAGE_SIZE - 1) / PAGE_SIZE) - 1);
-        return page_alloc(0);
+    if (pool_idx < 0) {                     // Allocate a block if size is too large
+        int order = order_find(size);
+        return page_alloc(order);
     }
 
     if (list_empty(&pools[pool_idx])) {
@@ -72,7 +80,7 @@ void *kmalloc(size_t size) {
         list_del(&slab_header->list);
     }
 
-    // uart_printf("\033[0;33mAllocate chunk at %p, page %p, chunk size %u\033[0m\n", chunk, slab_header, slab_header->chunk_size);
+    // uart_printf("\033[0;33m[Chunk]\tAllocate %p at chunk size %u\033[0m\n", chunk, slab_header->chunk_size);
 
     return chunk;
 }
@@ -81,8 +89,8 @@ void kfree(void *ptr) {
     if (!ptr) return;
 
     uintptr_t slab_start = ((uintptr_t)ptr) & ~(PAGE_SIZE - 1);      // Mask lower bits
-    if (slab_start == ((uintptr_t)ptr)) {           // ptr is the start address of a page
-        page_free(ptr, 0);
+    if (slab_start == ((uintptr_t)ptr)) {           // `ptr` is the start address of a page
+        page_free(ptr);
         return;
     }
 
@@ -95,13 +103,13 @@ void kfree(void *ptr) {
     int pool_idx = pool_find(slab_header->chunk_size);
     if (pool_idx < 0) return;
 
-    // uart_printf("\033[0;33mFree chunk at %p, page %p, chunk size %u\033[0m\n", chunk, slab_header, slab_header->chunk_size);
+    // uart_printf("\033[0;33m[Chunk]\tFree %p at chunk size %u\033[0m\n", chunk, slab_header->chunk_size);
 
     size_t total_chunks = (PAGE_SIZE - sizeof(slab_header_t)) / slab_header->chunk_size;
     if (slab_header->free_list_size == 1) {
         list_add_tail(&slab_header->list, &pools[pool_idx]);
     } else if (slab_header->free_list_size == total_chunks) {
         list_del(&slab_header->list);
-        page_free(slab_header, 0);
+        page_free(slab_header);
     }
 }

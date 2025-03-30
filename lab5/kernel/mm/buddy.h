@@ -39,6 +39,6 @@ void buddy_reserve(uintptr_t start, uintptr_t end);
 
 void buddy_init();
 void *page_alloc(int order);
-void page_free(void *addr, int order);
+void page_free(void *addr);
 
 #endif // BUDDY_H_

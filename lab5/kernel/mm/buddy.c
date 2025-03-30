@@ -14,6 +14,7 @@ static unsigned char *bitmap_buffer;
 // 1 means free
 static unsigned char *free_masks[MAX_ORDER]; 
 
+static unsigned char pfn_order[MAX_PAGES];     // Map PFN to order
 
 static unsigned char reserved_bitmap[(MAX_PAGES + 7) / 8 * 8];
 
@@ -23,7 +24,7 @@ void buddy_reserve(uintptr_t start, uintptr_t end) {
     end = MIN(end, MEM_END);
     unsigned long start_pfn = (start - MEM_START) / PAGE_SIZE;
     unsigned long end_pfn = (end - MEM_START + PAGE_SIZE - 1) / PAGE_SIZE;
-    // uart_printf("[x] Reserve address [%x, %x), PFN [%d, %d)\033[0m\n", start, end, start_pfn, end_pfn);
+    // uart_printf("[x] Reserve address [%x, %x). Range of pages: [%d, %d)\033[0m\n", start, end, start_pfn, end_pfn);
 
     for (unsigned long pfn = start_pfn; pfn < end_pfn; pfn++) {
         reserved_bitmap[pfn / 8] |= (1 << (pfn % 8));
@@ -63,14 +64,14 @@ static void free_add(int order, unsigned long pfn) {
     INIT_LIST_HEAD(block);
     list_add_tail(block, &free_lists[order]);
     mask_set_free(order, pfn);
-    // uart_printf("[+] Add PFN %u to order %u. Current list head: %p\n", pfn, order, free_lists[order].next);
+    // uart_printf("[+] Add page %u to order %u.\tRange of pages: [%u, %u]\n", pfn, order, pfn, pfn + (1 << order) - 1);
 }
 
 static void free_remove(int order, unsigned long pfn) {
     struct list_head *block = pfn_to_addr(pfn);
     list_del(block);
     mask_set_unfree(order, pfn);
-    // uart_printf("[-] Remove PFN %u from order %u. Current list head: %p\n", pfn, order, free_lists[order].next);
+    // uart_printf("[-] Remove page %u from order %u.\tRange of pages: [%u, %u]\n", pfn, order, pfn, pfn + (1 << order) - 1);
 }
 
 
@@ -93,6 +94,8 @@ void buddy_init() {
         memset(current, 0, (num_blocks + 7) / 8);
         current += (num_blocks + 7) / 8;
     }
+
+    memset(pfn_order, 0, sizeof(pfn_order));
 
     unsigned long current_pfn = 0;
     while (current_pfn < MAX_PAGES) {
@@ -152,18 +155,16 @@ void *page_alloc(int order) {
     struct list_head *block = free_lists[current_order].next;
     unsigned long block_pfn = addr_to_pfn(block);
     free_remove(current_order, block_pfn);
+    pfn_order[block_pfn] = current_order;
     
-    // uart_printf("\033[0;33mAllocate Page at order %d, pfn %d\033[0m\n", current_order, block_pfn, block);
+    // uart_printf("\033[0;33m[Page]\tAllocate %p at order %d, page %d. Next address at order %u: %p\033[0m\n", block, current_order, block_pfn, current_order, free_lists[current_order].next);
 
     return block;
 }
 
-void page_free(void *addr, int order) {
-    if (order < 0 || order >= MAX_ORDER) {
-        return;
-    }
-    
+void page_free(void *addr) {    
     unsigned long block_pfn = addr_to_pfn(addr);
+    int order = pfn_order[block_pfn];
     
     if (mask_is_free(order, block_pfn)) {
         return;
@@ -181,5 +182,6 @@ void page_free(void *addr, int order) {
 
     free_add(order, block_pfn);
     
-    // uart_printf("\033[0;33mFree Page at order %d, pfn %d\033[0m\n", order, block_pfn);
+    // uart_printf("\033[0;33m[Page]\tFree %p and add back to order %d, page %d. Next address at order %u: %p\033[0m\n", addr, order, block_pfn, order, free_lists[order].next);
+
 }

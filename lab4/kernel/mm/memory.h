@@ -41,7 +41,7 @@ static inline void memory_reserve(uintptr_t start, uintptr_t end) {
  *       calling this function.
  */
 static inline void memory_init() {
-    memory_reserve((uintptr_t)(SPIN_TABLE_START), (uintptr_t)(0x1000));
+    memory_reserve((uintptr_t)(SPIN_TABLE_START), (uintptr_t)(SPIN_TABLE_END));
     memory_reserve((uintptr_t)(&_start), (uintptr_t)(&_end));
 
     buddy_init();
