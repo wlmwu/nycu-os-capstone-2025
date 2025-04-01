@@ -8,6 +8,7 @@ OUTPUT = userprog.img
 ELF = userprog.elf
 
 BUILD_DIR = build
+ROOTFS_DIR = ../../rootfs
 CPIO_ARCHIVE = ../initramfs.cpio
 DT_ARCHIVE = ../bcm2710-rpi-3-b-plus.dtb
 
@@ -36,10 +37,10 @@ $(ELF): $(OBJ_FILES)
 $(OUTPUT): $(ELF)
 	$(OBJCOPY) --output-target=aarch64-rpi3-elf -O binary $< $@
 
-$(CPIO_ARCHIVE): ../rootfs $(OUTPUT)
-	@mkdir -p ../rootfs
-	@cp $(OUTPUT) ../rootfs/
-	cd ../rootfs; find . | cpio -o -H newc > ../initramfs.cpio; cd ..
+$(CPIO_ARCHIVE): $(ROOTFS_DIR) $(OUTPUT)
+	@mkdir -p $(ROOTFS_DIR)
+	@cp $(OUTPUT) $(ROOTFS_DIR)
+	cd $(ROOTFS_DIR); find . | cpio -o -H newc > $(CPIO_ARCHIVE)
 
 clean:
 	rm -rf $(BUILD_DIR) $(ELF) $(OUTPUT)
