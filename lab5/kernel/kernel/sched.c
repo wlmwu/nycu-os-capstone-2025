@@ -5,10 +5,10 @@
 #include "mini_uart.h"
 #include "utils.h"
 
-static LIST_HEAD(sched_queue);      // contain all threads
+static LIST_HEAD(sched_queue);      // Contain all threads
 
-extern void cpu_switch_to(void *prev_ctx, void *next_ctx);      // defined in entry.S
-static void context_switch(kthread_t *prev, kthread_t *next) {  
+extern void cpu_switch_to(void *prev_ctx, void *next_ctx);      // Defined in entry.S
+static void context_switch(sched_task_t *prev, sched_task_t *next) {  
     set_current(next);
     cpu_switch_to(&prev->context, &next->context);
 }
@@ -19,21 +19,21 @@ void schedule() {
         return;
     }
 
-    kthread_t *curr = get_current();
-    kthread_t *next = list_entry(sched_queue.next, kthread_t, list);
+    sched_task_t *curr = get_current();
+    sched_task_t *next = list_entry(sched_queue.next, sched_task_t, list);
     list_del(&next->list);
     list_add_tail(&next->list, &sched_queue);
 
     context_switch(curr, next);
 }
 
-void sched_enqueue_task(kthread_t *thread) {
+void sched_enqueue_task(sched_task_t *thread) {
     list_add_tail(&thread->list, &sched_queue);
 }
 
 static void idle() {
     while (1) {
-        kthread_t *thrd, *tmp;
+        sched_task_t *thrd, *tmp;
         list_for_each_entry_safe(thrd, tmp, &sched_queue, list) {
             if (thrd->state == kThDead) {
                 list_del(&thrd->list);
@@ -46,5 +46,5 @@ static void idle() {
 } 
 
 void sched_init() {
-    kthread_t *thrd = kthread_run(idle, NULL);
+    sched_task_t *thrd = kthread_run(idle, NULL);
 }

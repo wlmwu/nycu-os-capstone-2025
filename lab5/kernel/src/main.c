@@ -42,7 +42,7 @@ int main(void* arg) {   /* The value of arg is `x0` which is 0x8200000 in QEMU, 
     for (int i = 0; i < 5; ++i) {
         int *n = kmalloc(sizeof(int));
         *n = i + 1;
-        kthread_t *t = kthread_run(foo, n);
+        sched_task_t *t = kthread_run(foo, n);
     }
     kthread_run(shell_run, 0);
     schedule();
