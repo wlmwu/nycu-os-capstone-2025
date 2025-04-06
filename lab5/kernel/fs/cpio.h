@@ -44,7 +44,7 @@ typedef struct cpio_newc_header {
  * 
  * @return A pointer to the start address of the next file header in the cpio archive.
  */
-cpio_newc_header_t* cpio_get_file(cpio_newc_header_t *hptr, char **pathname, char **filedata);
+cpio_newc_header_t* cpio_get_file(cpio_newc_header_t *hptr, char **pathname, unsigned int *filesize, char **filedata);
 
 /**
  * @brief Retrieves a file header from the cpio archive by filename.

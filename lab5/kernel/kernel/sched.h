@@ -2,6 +2,7 @@
 #define SCHED_H_
 
 #include "list.h"
+#include <stdint.h>
 
 #define SCHED_STACK_SIZE 4096
 struct sched_context {
@@ -35,14 +36,16 @@ void schedule();
 void sched_enqueue_task(sched_task_t *thread);
 void sched_init();
 
+void sched_start();
+
 static inline sched_task_t* get_current() {
     void *curr_thrd;
-    asm volatile("mrs %0, tpidr_el1" : "=r"(curr_thrd));
+    asm volatile("mrs %0, tpidr_el0" : "=r"(curr_thrd));
     return curr_thrd;
 }
 
 static inline void set_current(sched_task_t* thread) {
-    asm volatile("msr tpidr_el1, %0" :: "r"((unsigned long)thread));
+    asm volatile("msr tpidr_el0, %0" :: "r"((unsigned long)thread));
 }
 
 #endif // SCHED_H_

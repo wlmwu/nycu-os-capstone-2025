@@ -4,6 +4,9 @@
 #include "utils.h"
 #include "cpio.h"
 #include "timer.h"
+#include "kthread.h"
+#include "irq.h"
+#include "slab.h"
 
 void shell_init() {
     uart_puts(kWelcomeMsg);
@@ -111,7 +114,7 @@ void command_ls(int argc, char **argv) {
     char *pathname;
     cpio_newc_header_t *hptr = cpio_get_start_file();
     while (hptr) {
-        hptr = cpio_get_file(hptr, &pathname, NULL);
+        hptr = cpio_get_file(hptr, &pathname, NULL, NULL);
         if (!pathname) {
             break;
         }
@@ -135,7 +138,7 @@ void command_cat(int argc, char **argv) {
 
     char *pathname;
     char *filedata;
-    cpio_get_file(hptr, &pathname, &filedata);
+    cpio_get_file(hptr, &pathname, NULL, &filedata);
     if (filedata) {
         uart_puts(filedata);
         uart_puts("\n");
@@ -162,29 +165,14 @@ void command_exec(int argc, char **argv) {
     }
 
     char *filedata;
-    cpio_get_file(hptr, NULL, &filedata);
-
-    void *stack_addr = malloc(USER_STACK_SIZE);
-    if (!stack_addr) {
-        uart_puts("Error: Failed to allocate user stack\n");
-        return;
-    }
-
-    uint64_t user_sp = (uint64_t)stack_addr + USER_STACK_SIZE;
-
-    const uint64_t kTimeoutSeconds = 2;
-    timer_add_event(exec_timer_event, &kTimeoutSeconds, sizeof(kTimeoutSeconds), kTimeoutSeconds);
+    uint32_t filesize = 0;
+    cpio_get_file(hptr, NULL, &filesize, &filedata);
     
-    asm volatile(
-        "msr    sp_el0, %[sp]   \n"     // Set user stack pointer
-        "msr    elr_el1, %[pc]  \n"     // Set return address to user program
-        // "mov    x0, 0x3c0       \n"     // EL0t mode (i.e., using SP_EL0), interrupts disabled (P.282)
-        // "msr    spsr_el1, x0    \n"
-        "msr    spsr_el1, xzr   \n"     // interrupts enabled
-        "eret                   \n"
-        :
-        : [sp] "r" (user_sp), [pc] "r" ((uint64_t)filedata)
-    );
+    void *prog = kmalloc(filesize);
+    // memset(prog, 0, filesize);
+    uart_dbg_printf("Load prog %p, size %u\n", prog, filesize);
+    memcpy(prog, filedata, filesize);
+    kthread_run(prog, NULL);
 }
 
 static void echoat_timer_event(void *msg) {
@@ -200,4 +188,7 @@ void command_echoat(int argc, char** argv) {
     uint64_t seconds = stoi(argv[2], NULL, 10);
     
     timer_add_event(echoat_timer_event, (void *)message, strlen(message) + 1, seconds);
+}
+void command_sched(int argc, char** argv) {
+    schedule();    
 }

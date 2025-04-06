@@ -7,21 +7,23 @@
 static void *cpio_start;
 static void *cpio_end;
 
-cpio_newc_header_t* cpio_get_file(cpio_newc_header_t *hptr, char **pathname, char **filedata) {
+cpio_newc_header_t* cpio_get_file(cpio_newc_header_t *hptr, char **pathname, unsigned int *filesize, char **filedata) {
     if (strncmp(hptr->c_magic, CPIO_NEWC_MAGIC, sizeof(hptr->c_magic)) != 0) {
         return 0;
     }
     unsigned int pathname_size = hexstr2uint(hptr->c_namesize);
-    unsigned int filesize = hexstr2uint(hptr->c_filesize);
+    unsigned fsize;
+    if (!filesize) filesize = &fsize;
+    *filesize = hexstr2uint(hptr->c_filesize);
 
     *pathname = (char*)hptr + sizeof(cpio_newc_header_t);
     if (strcmp(*pathname, CPIO_END_RECORD) == 0) {
         *pathname = NULL;
     }
     unsigned int offset = (unsigned int)((pathname_size + sizeof(cpio_newc_header_t) + CPIO_PAD_LEN - 1) / CPIO_PAD_LEN) * CPIO_PAD_LEN;
-    *filedata = (filesize != 0) ? (char*)hptr + offset : 0;
+    *filedata = ((*filesize) != 0) ? (char*)hptr + offset : 0;
     
-    offset += (unsigned int)((filesize + CPIO_PAD_LEN - 1) / CPIO_PAD_LEN) * CPIO_PAD_LEN;
+    offset += (unsigned int)(((*filesize) + CPIO_PAD_LEN - 1) / CPIO_PAD_LEN) * CPIO_PAD_LEN;
     cpio_newc_header_t *next_hptr = (cpio_newc_header_t*)((char*)hptr + offset);
 
     return next_hptr;
@@ -31,7 +33,7 @@ cpio_newc_header_t* cpio_get_file_by_name(char *filename) {
     char *pathname;
     cpio_newc_header_t *hptr = (cpio_newc_header_t*)cpio_start;
     do {
-        cpio_newc_header_t *nhptr = cpio_get_file(hptr, &pathname, NULL);
+        cpio_newc_header_t *nhptr = cpio_get_file(hptr, &pathname, NULL, NULL);
         if (strcmp(pathname, filename) == 0 ||
            (strncmp(pathname, "./", sizeof("./") - 1) == 0 && strcmp(pathname + (sizeof("./") - 1), filename) == 0)) {      // sizeof("./") is length of "./\0"
             return hptr;
@@ -47,7 +49,7 @@ cpio_newc_header_t* cpio_get_file_by_name(char *filename) {
 cpio_newc_header_t* cpio_get_start_file() {
     char *pathname;
     cpio_newc_header_t *hptr = (cpio_newc_header_t*)cpio_start;
-    cpio_get_file(hptr, &pathname, NULL);
+    cpio_get_file(hptr, &pathname, NULL, NULL);
     if (!pathname) {
         return NULL;
     } else {

@@ -1,6 +1,7 @@
     // save general registers to stack
+    // The layout here should be aligned with trapframe_t defined in exception.h
     .macro save_all
-        sub sp, sp, 34 * 8                // Allocate space for 34 registers (x0-x30 + elr_el1 + spsr_el1)
+        sub sp, sp, 34 * 8                // Allocate space for 34 registers (x0-x30 + elr_el1 + spsr_el1 + sp+el0)
         stp x0, x1, [sp ,16 * 0]
         stp x2, x3, [sp ,16 * 1]
         stp x4, x5, [sp ,16 * 2]
@@ -16,7 +17,9 @@
         stp x24, x25, [sp ,16 * 12]
         stp x26, x27, [sp ,16 * 13]
         stp x28, x29, [sp ,16 * 14]
-        str x30, [sp, 16 * 15]
+        
+        mrs x1, sp_el0
+        stp x30, x1, [sp, 16 * 15]
 
         mrs x2, elr_el1
         mrs x3, spsr_el1
@@ -40,7 +43,9 @@
         ldp x24, x25, [sp ,16 * 12]
         ldp x26, x27, [sp ,16 * 13]
         ldp x28, x29, [sp ,16 * 14]
-        ldr x30, [sp, 16 * 15]
+        
+        ldp x30, x1, [sp, 16 * 15]
+        msr sp_el0, x1
 
         ldp x2, x3, [sp, 16 * 16]         // Load elr_el1/spsr_el1 from stack
         msr elr_el1, x2
@@ -54,6 +59,7 @@
     .macro entry_label, el:req, ht:req, regsize:req, label:req
     el\el\ht\()_\regsize\()_\label:
         save_all
+        mov	x0, sp
         bl el\el\ht\()_\regsize\()_\label\()_handler
         load_all
         eret

@@ -45,7 +45,8 @@ int main(void* arg) {   /* The value of arg is `x0` which is 0x8200000 in QEMU, 
         sched_task_t *t = kthread_run(foo, n);
     }
     kthread_run(shell_run, 0);
-    schedule();
+    // schedule();
+    sched_start();
 
     return 0;
 }
