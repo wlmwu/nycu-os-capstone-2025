@@ -17,7 +17,6 @@ int sys_read(unsigned long args[]) {
     size_t sz = args[1];
     while (sz--) {
         char c = uart_getc();
-        uart_printf("%c", c);
         *ptr++ = c;
     }
     return args[1];
@@ -25,7 +24,8 @@ int sys_read(unsigned long args[]) {
 int sys_write(unsigned long args[]) {
     uart_dbg_printf("\033[1;95mSyscall Write\033[0m\n");
     char *str = (char*)(args[0]);
-    while (*str) {
+    size_t sz = args[1];
+    while ((*str) && (sz--)) {
         uart_printf("\033[1;33m%c\033[0m", *str++);
     }
     

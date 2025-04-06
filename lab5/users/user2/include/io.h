@@ -113,6 +113,7 @@ static inline char* fgets(char *buf, size_t size) {
         if (read(&c, 1) != 1) break;
         if (c == '\r') c = '\n';
         buf[n++] = c;
+        putc(c);
         if (c == '\n') break;
     }
 
