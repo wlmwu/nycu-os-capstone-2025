@@ -23,4 +23,6 @@ void uart_irq_enable();
 void uart_irq_disable();
 void uart_irq_handle();
 
+void uart_dbg_printf(const char* format, ...);
+
 #endif // MINI_UART_H_

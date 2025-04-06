@@ -190,3 +190,108 @@ void uart_irq_handle() {
         uart_printf("UART IRQ unknown\n");
     }
 }
+
+void uart_dbg_printf(const char* format, ...) {
+    va_list args;
+    va_start(args, format);
+
+    // Create a buffer (adjust size as needed)
+    #define PRINTF_BUFFER_SIZE 256
+    char buffer[PRINTF_BUFFER_SIZE];
+    char *buf_ptr = buffer;
+    char *buf_end = buffer + PRINTF_BUFFER_SIZE - 1; // Leave space for null terminator
+
+    while (*format && buf_ptr < buf_end) {
+        if (*format == '%') {
+            format++; // Move past '%'
+
+            switch (*format) {
+                case 'd': {  // Signed integer
+                    int val = va_arg(args, int);
+                    if (val < 0) {
+                        *buf_ptr++ = '-';
+                        val = -val;
+                    }
+                    char *num_str = itos((unsigned int)val, 10);
+                    while (*num_str && buf_ptr < buf_end) {
+                        *buf_ptr++ = *num_str++;
+                    }
+                    break;
+                }
+                case 'u': {  // Unsigned integer
+                    char *num_str = itos(va_arg(args, unsigned int), 10);
+                    while (*num_str && buf_ptr < buf_end) {
+                        *buf_ptr++ = *num_str++;
+                    }
+                    break;
+                }
+                case 'x': {  // Hexadecimal
+                    *buf_ptr++ = '0';
+                    *buf_ptr++ = 'x';
+                    char *num_str = itos(va_arg(args, unsigned int), 16);
+                    while (*num_str && buf_ptr < buf_end) {
+                        *buf_ptr++ = *num_str++;
+                    }
+                    break;
+                }
+                case 'p': {  // Pointer (Hexadecimal with 0x prefix)
+                    *buf_ptr++ = '0';
+                    *buf_ptr++ = 'x';
+                    char *num_str = itos((unsigned long)va_arg(args, void*), 16);
+                    while (*num_str && buf_ptr < buf_end) {
+                        *buf_ptr++ = *num_str++;
+                    }
+                    break;
+                }
+                case 's': {  // String
+                    char *str = va_arg(args, char*);
+                    while (*str && buf_ptr < buf_end) {
+                        *buf_ptr++ = *str++;
+                    }
+                    break;
+                }
+                case 'c': {  // Character
+                    if (buf_ptr < buf_end) {
+                        *buf_ptr++ = (char)va_arg(args, int);
+                    }
+                    break;
+                }
+                case '%': {  // Literal '%'
+                    if (buf_ptr < buf_end) {
+                        *buf_ptr++ = '%';
+                    }
+                    break;
+                }
+                default: {  // Unknown format specifier, just print it
+                    if (buf_ptr < buf_end) {
+                        *buf_ptr++ = '%';
+                    }
+                    if (buf_ptr < buf_end) {
+                        *buf_ptr++ = *format;
+                    }
+                    break;
+                }
+            }
+        } else {  // Normal character
+            if (*format == '\n' && buf_ptr < buf_end) {
+                *buf_ptr++ = '\r';  // Convert LF to CRLF
+            }
+            if (buf_ptr < buf_end) {
+                *buf_ptr++ = *format;
+            }
+        }
+        format++;
+    }
+
+    // Null-terminate the buffer
+    *buf_ptr = '\0';
+
+    // Output the entire buffer at once
+    buf_ptr = buffer;
+    while (*buf_ptr) {
+        if (*buf_ptr == '\n') uart_putc('\r');
+        uart_putc(*buf_ptr++);
+    }
+
+    va_end(args);
+}
