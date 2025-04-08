@@ -8,19 +8,21 @@
 #include "sched.h"
 #include "kthread.h"
 #include "utils.h"
+#include "syscall.h"
 
-static void delay(unsigned int clock) {
-    while (clock--) {
-        asm volatile("nop");
-    }
+static inline void call_sys_yield() {
+    asm volatile(
+        "mov    x8, %[x8]   \n"
+        "svc    0           \n" 
+        :: [x8] "r" (SYS_YIELD)
+    );
 }
 
 static void foo(void *args) {
     int n = *(int*)args;
     for(int i = 0; i < n; ++i) {
         uart_printf("Thread ID %d: %d\n", (unsigned long)sched_get_current(), i);
-        delay(1000000);
-        schedule();
+        call_sys_yield();
     }
 }
 
@@ -35,18 +37,15 @@ int main(void* arg) {   /* The value of arg is `x0` which is 0x8200000 in QEMU, 
     
     memory_init();
 
-    sched_init();
+    // sched_init();
 
     shell_init();
-    // shell_run();
     for (int i = 0; i < 5; ++i) {
         int *n = kmalloc(sizeof(int));
         *n = i + 1;
-        sched_task_t *t = kthread_run(foo, n);
+        kthread_run(foo, n);
     }
-    kthread_run(shell_run, 0);
-    // schedule();
-    sched_start();
+    shell_run();        // Always runs in EL1
 
     return 0;
 }

@@ -5,6 +5,8 @@
 #include "mini_uart.h"
 #include "utils.h"
 #include "slab.h"
+#include "syscall.h"
+#include "shell.h"
 #include <stdbool.h>
 
 static LIST_HEAD(sched_queue);      // Contain all threads
@@ -24,11 +26,16 @@ void schedule() {
     sched_task_t *curr = sched_get_current();
     sched_task_t *next = list_entry(sched_queue.next, sched_task_t, list);
     list_del(&next->list);
-    list_add_tail(&next->list, &sched_queue);
+
+    if (list_empty(&sched_queue)) {         // All threads have exited (except `idle()`), return to shell
+        shell_run();
+    } else {
+        list_add_tail(&next->list, &sched_queue);
+        context_switch(curr, next);
+    }
 
     // uart_dbg_printf("Switch: %p (sp: %x) -> %p (sp: %x)\n", curr, curr->context.sp, next, next->context.sp);
 
-    context_switch(curr, next);
 }
 
 void sched_enqueue_task(sched_task_t *thread) {
@@ -41,6 +48,14 @@ static inline bool is_user_fn(void *fn) {
     return !((uintptr_t)fn >= (uintptr_t)(&_start) && (uintptr_t)fn <= (uintptr_t)(&_end));
 }  
 
+static inline void call_sys_yield() {
+    asm volatile(
+        "mov    x8, %[x8]   \n"
+        "svc    0           \n" 
+        :: [x8] "r" (SYS_YIELD)
+    );
+}
+
 static void idle() {
     while (1) {
         sched_task_t *thrd, *tmp;
@@ -48,28 +63,16 @@ static void idle() {
             if (thrd->state == kThDead) {
                 list_del(&thrd->list);
                 if (is_user_fn(thrd->fn)) kfree(thrd->fn);
-                kfree(thrd->stack_bottom);
+                kfree(thrd->ustack);
+                kfree(thrd->kstack);
                 kfree(thrd);
             }
         }
-        schedule();
+        call_sys_yield();
     }
 } 
 
-void sched_init() {
-    sched_task_t *thrd = kthread_run(idle, NULL);
-}
-
 void sched_start() {
-    void *kstack = kmalloc(SCHED_STACK_SIZE);       // Create a kernel stack for save/load operations during EL transitions
-    uint64_t ksp = (uint64_t)kstack + SCHED_STACK_SIZE;
-    // uart_dbg_printf("Schedule creates stack %p\n", ksp);
-    asm volatile(
-        "msr    sp_el0, %[sp]   \n"     // Set user stack pointer
-        "msr    elr_el1, %[pc]  \n"     // Set return address to user program
-        "msr    spsr_el1, xzr   \n"     // Enable interrupt in EL0
-        "eret                   \n"
-        :
-        : [sp] "r" (ksp), [pc] "r" ((uintptr_t)schedule)
-    );
+    kthread_run(idle, NULL);
+    schedule();
 }

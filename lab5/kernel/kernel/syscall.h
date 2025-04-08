@@ -11,6 +11,7 @@
 #define SYS_EXIT        5
 #define SYS_MBOXCALL    6
 #define SYS_KILL        7
+#define SYS_YIELD       8       // To call schedule() in EL0
 
 void syscall_handle(trapframe_t *tf);
 

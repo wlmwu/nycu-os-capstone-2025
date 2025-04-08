@@ -172,6 +172,7 @@ void command_exec(int argc, char **argv) {
     uart_dbg_printf("Load prog %p, size %u\n", prog, filesize);
     memcpy(prog, filedata, filesize);
     kthread_run(prog, NULL);
+    sched_start();     // Jump to thread queue
 }
 
 static void echoat_timer_event(void *msg) {

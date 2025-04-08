@@ -26,7 +26,8 @@ typedef void (*sched_fn_t)(void *args);
 typedef struct sched_task {
     struct sched_context context;
     enum { kThRunnable, kThDead } state;
-    void *stack_bottom;
+    void *ustack;                           // User stack bottom
+    void *kstack;                           // Kernel stack bottom
     sched_fn_t fn;
     void *args;
 	struct list_head list;
@@ -34,7 +35,6 @@ typedef struct sched_task {
 
 void schedule();
 void sched_enqueue_task(sched_task_t *thread);
-void sched_init();
 
 void sched_start();
 

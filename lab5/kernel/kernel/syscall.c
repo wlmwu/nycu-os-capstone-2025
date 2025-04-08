@@ -54,7 +54,7 @@ int sys_exec(trapframe_t *tf) {
     kfree(curr->fn);                            // Assume `curr` is a user process
 
     curr->fn = prog;
-    tf->sp = (uintptr_t)curr->stack_bottom + SCHED_STACK_SIZE;
+    tf->sp = (uintptr_t)curr->ustack + SCHED_STACK_SIZE;
     tf->elr = (uintptr_t)curr->fn;
     return tf->x[0];
 }
@@ -75,6 +75,11 @@ int sys_kill(trapframe_t *tf) {
     uart_dbg_printf("Syscall Unimplemented\n");
     return 0;
 }
+int sys_yield(trapframe_t *tf) {
+    uart_dbg_printf("\033[1;95mSyscall yield\033[0m\n");
+    schedule();
+    return 0;
+}
 
 static int (*syscalls[])(trapframe_t *tf) = {
     [SYS_GETPID]    sys_getpid,
@@ -85,6 +90,7 @@ static int (*syscalls[])(trapframe_t *tf) = {
     [SYS_EXIT]      sys_exit,
     [SYS_MBOXCALL]  sys_mboxcall,
     [SYS_KILL]      sys_kill,
+    [SYS_YIELD]     sys_yield,
 };
 
 void syscall_handle(trapframe_t *tf) {
