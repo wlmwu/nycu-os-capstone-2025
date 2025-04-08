@@ -23,6 +23,8 @@ __attribute__((section(".text.start"))) int main() {
     puts(buf);
     asm volatile("mov x27, 0x724");
 
+    exec("syscall.img", NULL);
+
     // exit();
     return 0;
 }

@@ -65,4 +65,13 @@ static inline void exit() {
     unsigned long retval = syscall(SYS_EXIT, x);
 }
 
+static inline int exec(const char* name, char *const argv[]) {
+    unsigned long x[8];   // x0 ~ x7
+    x[0] = (uintptr_t)name;
+    x[1] = (uintptr_t)argv;
+    unsigned long retval = syscall(SYS_EXEC, x);
+
+    return retval;
+}
+
 #endif // SYSCALL_H_

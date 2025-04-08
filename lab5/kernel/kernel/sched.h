@@ -38,13 +38,13 @@ void sched_init();
 
 void sched_start();
 
-static inline sched_task_t* get_current() {
+static inline sched_task_t* sched_get_current() {
     void *curr_thrd;
     asm volatile("mrs %0, tpidr_el0" : "=r"(curr_thrd));
     return curr_thrd;
 }
 
-static inline void set_current(sched_task_t* thread) {
+static inline void sched_set_current(sched_task_t* thread) {
     asm volatile("msr tpidr_el0, %0" :: "r"((unsigned long)thread));
 }
 

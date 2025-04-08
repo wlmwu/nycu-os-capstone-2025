@@ -18,7 +18,7 @@ static inline void kthread_syscall_exit() {
 }
 
 static void kthread_fn_wrapper() {
-    sched_task_t *thrd = get_current();
+    sched_task_t *thrd = sched_get_current();
     if (!thrd) return;
     thrd->fn(thrd->args);
     // kthread_exit();
@@ -45,7 +45,7 @@ sched_task_t* kthread_create(sched_fn_t fn, void *args) {
 }
 
 void kthread_exit() {
-    sched_task_t *curr = get_current();
+    sched_task_t *curr = sched_get_current();
     curr->state = kThDead;
     asm volatile(
         "msr    spsr_el1, xzr      \n"  // EL0t mode, IRQ enable

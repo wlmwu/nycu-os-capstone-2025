@@ -18,7 +18,7 @@ static void delay(unsigned int clock) {
 static void foo(void *args) {
     int n = *(int*)args;
     for(int i = 0; i < n; ++i) {
-        uart_printf("Thread ID %d: %d\n", (unsigned long)get_current(), i);
+        uart_printf("Thread ID %d: %d\n", (unsigned long)sched_get_current(), i);
         delay(1000000);
         schedule();
     }

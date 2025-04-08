@@ -11,7 +11,7 @@ static LIST_HEAD(sched_queue);      // Contain all threads
 
 extern void cpu_switch_to(void *prev_ctx, void *next_ctx);      // Defined in entry.S
 static void context_switch(sched_task_t *prev, sched_task_t *next) {  
-    set_current(next);
+    sched_set_current(next);
     cpu_switch_to(&prev->context, &next->context);
 }
 
@@ -21,7 +21,7 @@ void schedule() {
         return;
     }
 
-    sched_task_t *curr = get_current();
+    sched_task_t *curr = sched_get_current();
     sched_task_t *next = list_entry(sched_queue.next, sched_task_t, list);
     list_del(&next->list);
     list_add_tail(&next->list, &sched_queue);

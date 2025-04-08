@@ -169,7 +169,6 @@ void command_exec(int argc, char **argv) {
     cpio_get_file(hptr, NULL, &filesize, &filedata);
     
     void *prog = kmalloc(filesize);
-    // memset(prog, 0, filesize);
     uart_dbg_printf("Load prog %p, size %u\n", prog, filesize);
     memcpy(prog, filedata, filesize);
     kthread_run(prog, NULL);
