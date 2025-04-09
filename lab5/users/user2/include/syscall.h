@@ -74,4 +74,10 @@ static inline int exec(const char* name, char *const argv[]) {
     return retval;
 }
 
+static inline int fork() {
+    unsigned long x[8];   // x0 ~ x7
+    unsigned long retval = syscall(SYS_FORK, x);
+    return retval;
+}
+
 #endif // SYSCALL_H_
