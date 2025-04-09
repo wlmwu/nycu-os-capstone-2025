@@ -40,11 +40,11 @@ int main(void* arg) {   /* The value of arg is `x0` which is 0x8200000 in QEMU, 
     // sched_init();
 
     shell_init();
-    for (int i = 0; i < 5; ++i) {
-        int *n = kmalloc(sizeof(int));
-        *n = i + 1;
-        kthread_run(foo, n);
-    }
+    // for (int i = 0; i < 5; ++i) {
+    //     int *n = kmalloc(sizeof(int));
+    //     *n = i + 1;
+    //     kthread_run(foo, n);
+    // }
     shell_run();        // Always runs in EL1
 
     return 0;

@@ -33,9 +33,6 @@ void schedule() {
         list_add_tail(&next->list, &sched_queue);
         context_switch(curr, next);
     }
-
-    // uart_dbg_printf("Switch: %p (sp: %x) -> %p (sp: %x)\n", curr, curr->context.sp, next, next->context.sp);
-
 }
 
 void sched_enqueue_task(sched_task_t *thread) {
@@ -62,7 +59,7 @@ static void idle() {
         list_for_each_entry_safe(thrd, tmp, &sched_queue, list) {
             if (thrd->state == kThDead) {
                 list_del(&thrd->list);
-                if (is_user_fn(thrd->fn)) kfree(thrd->fn);
+                // if (is_user_fn(thrd->fn)) kfree(thrd->fn);   // Parent might exit before children. However, they must use the same memory for the program.
                 kfree(thrd->ustack);
                 kfree(thrd->kstack);
                 kfree(thrd);

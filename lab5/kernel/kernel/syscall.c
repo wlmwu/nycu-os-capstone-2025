@@ -51,6 +51,7 @@ int sys_exec(trapframe_t *tf) {
     memcpy(prog, filedata, filesize);
 
     sched_task_t *curr = sched_get_current();
+    curr->size = filesize;
     kfree(curr->fn);                            // Assume `curr` is a user process
 
     curr->fn = prog;
@@ -59,8 +60,39 @@ int sys_exec(trapframe_t *tf) {
     return tf->x[0];
 }
 int sys_fork(trapframe_t *tf) {
-    uart_dbg_printf("Syscall Unimplemented\n");
-    return 0;
+    uart_dbg_printf("\033[1;95mSyscall Fork %p\033[0m\n", sched_get_current());
+    sched_task_t *parent = sched_get_current();
+    sched_task_t *child = kthread_run(parent->fn, parent->args);
+    child->size = parent->size;
+
+    int32_t kstack_offset = (int32_t)child->kstack - (int32_t)parent->kstack;
+    int32_t ustack_offset = (int32_t)child->ustack - (int32_t)parent->ustack;
+    memcpy(child->kstack, parent->kstack, SCHED_STACK_SIZE);
+    memcpy(child->ustack, parent->ustack, SCHED_STACK_SIZE);
+    uintptr_t sp, fp;
+    asm volatile(
+        "mov %0, sp     \n" 
+        "mov %1, fp     \n"
+        : "=r" (sp), "=r" (fp)
+        :
+    );
+
+    child->context = parent->context;
+    child->context.fp = (uintptr_t)((int32_t)fp + kstack_offset);  
+    child->context.sp = (uintptr_t)((int32_t)sp + kstack_offset);
+    *(uintptr_t*)child->context.fp += kstack_offset;        // Adjust `fp` to child's stack copy
+
+childret:
+    sched_task_t *curr = sched_get_current();
+    if (curr == parent) {
+        child->context.pc = (uintptr_t)(&&childret);    // https://gcc.gnu.org/onlinedocs/gcc/Labels-as-Values.html
+        return (uintptr_t)child;
+    } else {
+        tf = (trapframe_t*)((char*)tf + kstack_offset);
+        tf->sp = (int32_t)tf->sp + ustack_offset;
+        tf->x[0] = 0;
+        return 0;       // Return to the parent's trapframe, since `syscall_handle` was called with the parent's trapframe as an argument
+    }
 }
 int sys_exit(trapframe_t *tf) {
     uart_dbg_printf("\033[1;95mSyscall Exit\033[0m\n");

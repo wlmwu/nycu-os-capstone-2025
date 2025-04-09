@@ -3,6 +3,7 @@
 
 #include "list.h"
 #include <stdint.h>
+#include <stddef.h>
 
 #define SCHED_STACK_SIZE 4096
 struct sched_context {
@@ -30,6 +31,7 @@ typedef struct sched_task {
     void *kstack;                           // Kernel stack bottom
     sched_fn_t fn;
     void *args;
+    size_t size;
 	struct list_head list;
 } sched_task_t;
 

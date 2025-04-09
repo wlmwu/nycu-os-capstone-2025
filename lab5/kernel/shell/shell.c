@@ -171,7 +171,8 @@ void command_exec(int argc, char **argv) {
     void *prog = kmalloc(filesize);
     uart_dbg_printf("Load prog %p, size %u\n", prog, filesize);
     memcpy(prog, filedata, filesize);
-    kthread_run(prog, NULL);
+    sched_task_t *thrd = kthread_run(prog, NULL);
+    thrd->size = filesize;
     sched_start();     // Jump to thread queue
 }
 
