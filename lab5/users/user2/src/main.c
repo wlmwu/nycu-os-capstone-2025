@@ -34,6 +34,20 @@ static void fork_test(){
     }
 }
 
+static int get_board_revision() {
+    unsigned int  __attribute__((aligned(16))) buf[7];
+    buf[0] = 7 * 4;     
+    buf[1] = 0;                                              
+    buf[2] = 0x00010002;
+    buf[3] = 4;                  
+    buf[4] = 0;             
+    buf[5] = 0;                                                        
+    buf[7] = 0;      
+
+    mbox_call(8, buf);
+    return buf[5];
+}
+
 __attribute__((section(".text.start"))) int main() {
     asm volatile("mov x27, 0x72");  // Used to track the progress of the program when using gdb 
 
@@ -50,16 +64,28 @@ __attribute__((section(".text.start"))) int main() {
     fgets(buf, READ_LEN);
     puts(buf);
     asm volatile("mov x27, 0x724");
+    
+    printf("PID %d Starts Fork Test\n", getpid());
+    
+    fork_test();
+    
+    printf("PID %d Starts Kill Test\n", getpid());
 
-    if ((pid = fork()) == 0) {  // child
-        puts("Child\n");
+    int child1, child2;
+    if ((child1 = fork()) == 0) {  // child
+        printf("Child 1 %d\n", getpid());
+        if ((child2 = fork()) == 0) {  // child
+            printf("Child 2 %d\n", getpid());
+        } else {
+            printf("Child 1 %d forked Child 2 %d\n", getpid(), child2);
+            kill(child2);
+            printf("Child 1 %d killed Child 2 %d\n", getpid(), child2);
+        }
         exec("syscall.img", NULL);
     } else {
-        puts("Parent\n");
-        fork_test();
+        printf("Parent %d\n", getpid());
+        printf("Board Revision:\t%x\n", get_board_revision());
     }
-
-    printf("PID %d exit\n", getpid());
 
     // exit();
     return 0;

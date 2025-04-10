@@ -80,4 +80,18 @@ static inline int fork() {
     return retval;
 }
 
+static inline void kill(int pid) {
+    unsigned long x[8];   // x0 ~ x7
+    x[0] = pid;
+    unsigned long retval = syscall(SYS_KILL, x);
+}
+
+static int mbox_call(unsigned char ch, unsigned int *mbox) {
+    unsigned long x[8];   // x0 ~ x7
+    x[0] = (uintptr_t)ch;
+    x[1] = (uintptr_t)mbox;
+    unsigned long retval = syscall(SYS_MBOXCALL, x);
+
+    return retval;
+}
 #endif // SYSCALL_H_
