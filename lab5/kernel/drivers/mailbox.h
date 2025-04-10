@@ -1,6 +1,8 @@
 #ifndef MAILBOX_H_
 #define MAILBOX_H_
 
+#include <stdint.h>
+
 #define LEN_MBOX_RESPONSE_MAX 8
 
 // Mailbox Channels
@@ -61,12 +63,25 @@ typedef enum {
     kStatusEmpty = 0x40000000,
 } MBoxStatus;
 
-/*
-    output: output buffer
-    tag:    tag identifier
-    num_res:    num of results
-*/
-void mbox_get_info(char* output, mbox_tag_id_t tag, unsigned int num_res);
-int mbox_call(unsigned int*);
+/**
+ * @brief Retrieves VideoCore information via mailbox.
+ *
+ * Sends a request for a specific tag and copies the response to the output buffer.
+ *
+ * @param output Pointer to store the retrieved information (n_ret 32-bit values).
+ * @param tag    Identifier of the information tag to retrieve.
+ * @param n_ret  Number of expected 32-bit values in the response.
+ */
+void mbox_get_info(uint32_t* output, mbox_tag_id_t tag, unsigned int n_ret);
+/**
+ * @brief Sends a message to the VideoCore mailbox and waits for a response.
+ *
+ * Writes a message buffer to the specified mailbox channel and checks for a successful response.
+ *
+ * @param buf     Pointer to the aligned message buffer.
+ * @param channel Mailbox channel to use.
+ * @return 1 on success, 0 on failure.
+ */
+int mbox_call(unsigned int *buf, mbox_channel_t channel);
 
 #endif // MAILBOX_H_

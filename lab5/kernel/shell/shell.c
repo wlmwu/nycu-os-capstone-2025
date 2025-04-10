@@ -88,22 +88,13 @@ void command_help(int argc, char **argv) {
 }
 
 void command_info(int argc, char **argv) {
-    char buf[NUM_CMD_SEND_MAX];
-
+    uint32_t buf[2];    // kTagGetArmMemory returns two value
+    
     mbox_get_info(buf, kTagGetBoardRevision, 1);
-    uart_puts("Board Revision:\t\t\t");
-    uart_puts(buf);
-    uart_puts("\n");
-
-    memset(buf, 0, sizeof(buf));
-
+    uart_printf("Board Revision:\t\t\t%x\n", buf[0]);
     mbox_get_info(buf, kTagGetArmMemory, 2);
-    uart_puts("ARM Memory Base Address:\t");
-    uart_puts(buf);
-    uart_puts("\n");
-    uart_puts("ARM Memory Size:\t\t");
-    uart_puts(&buf[LEN_U32_HEX_STR]);
-    uart_puts("\n");
+    uart_printf("ARM Memory Base Address:\t%x\n", buf[0]);
+    uart_printf("ARM Memory Size:\t\t%x\n", buf[1]);
 }
 
 void command_reboot(int argc, char **argv) {
