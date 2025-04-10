@@ -26,6 +26,11 @@ void schedule() {
     sched_task_t *curr = sched_get_current();
     sched_task_t *next = list_entry(sched_queue.next, sched_task_t, list);
     list_del(&next->list);
+    while (next->state == kThDead) {
+        list_add_tail(&next->list, &sched_queue);
+        next = list_entry(sched_queue.next, sched_task_t, list);
+        list_del(&next->list);
+    }
 
     if (list_empty(&sched_queue)) {         // All threads have exited (except `idle()`), return to shell
         shell_run();
@@ -72,4 +77,14 @@ static void idle() {
 void sched_start() {
     kthread_run(idle, NULL);
     schedule();
+}
+
+sched_task_t* sched_get_task(int taskid) {
+    sched_task_t *thrd, *tmp;
+    list_for_each_entry_safe(thrd, tmp, &sched_queue, list) {
+        if ((uintptr_t)thrd == taskid) {    // PID hasn't implemented, use address instead
+            return thrd;
+        }
+    }
+    return NULL;
 }

@@ -6,6 +6,7 @@
 #include "utils.h"
 #include "cpio.h"
 #include "slab.h"
+#include "mailbox.h"
 
 int sys_getpid(trapframe_t *tf) {
     uart_dbg_printf("\033[1;95mSyscall GetPID\033[0m\n");
@@ -100,15 +101,22 @@ int sys_exit(trapframe_t *tf) {
     return 0;
 }
 int sys_mboxcall(trapframe_t *tf) {
-    uart_dbg_printf("Syscall Unimplemented\n");
-    return 0;
+    uart_dbg_printf("\033[1;95mSyscall Mbox\033[0m\n");
+    unsigned char channel = tf->x[0];
+    unsigned int *mbox = (unsigned int*)(tf->x[1]);
+    return mbox_call(mbox, channel);
 }
 int sys_kill(trapframe_t *tf) {
-    uart_dbg_printf("Syscall Unimplemented\n");
+    uart_dbg_printf("\033[1;95mSyscall Kill\033[0m\n");
+    int pid = tf->x[0];
+    sched_task_t *thrd = sched_get_task(pid);
+    if (thrd) {
+        thrd->state = kThDead;
+    }
     return 0;
 }
 int sys_yield(trapframe_t *tf) {
-    uart_dbg_printf("\033[1;95mSyscall yield\033[0m\n");
+    uart_dbg_printf("\033[1;95mSyscall Yield\033[0m\n");
     schedule();
     return 0;
 }

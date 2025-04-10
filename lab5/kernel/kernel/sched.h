@@ -40,6 +40,8 @@ void sched_enqueue_task(sched_task_t *thread);
 
 void sched_start();
 
+sched_task_t* sched_get_task(int taskid);
+
 static inline sched_task_t* sched_get_current() {
     void *curr_thrd;
     asm volatile("mrs %0, tpidr_el0" : "=r"(curr_thrd));
