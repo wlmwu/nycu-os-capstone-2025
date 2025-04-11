@@ -88,7 +88,7 @@ void command_help(int argc, char **argv) {
 }
 
 void command_info(int argc, char **argv) {
-    uint32_t buf[2];    // kTagGetArmMemory returns two value
+    uint32_t buf[2];    // kTagGetArmMemory returns two values
     
     mbox_get_info(buf, kTagGetBoardRevision, 1);
     uart_printf("Board Revision:\t\t\t%x\n", buf[0]);
@@ -136,12 +136,6 @@ void command_cat(int argc, char **argv) {
     }
 }
 
-static void exec_timer_event(void *sec) {
-    uint64_t s = *(uint64_t*)sec;
-    uart_printf("Time passed after booting: %u sec.\n", timer_tick_to_second(timer_get_current_tick()));
-    timer_add_event(exec_timer_event, &s, sizeof(s), s);
-}
-
 void command_exec(int argc, char **argv) {
     if (argc < 2) {
         uart_puts("Usage: exec <program.img>\n");
@@ -160,8 +154,8 @@ void command_exec(int argc, char **argv) {
     cpio_get_file(hptr, NULL, &filesize, &filedata);
     
     void *prog = kmalloc(filesize);
-    // uart_dbg_printf("Load prog %p, size %u\n", prog, filesize);
     memcpy(prog, filedata, filesize);
+
     sched_task_t *thrd = kthread_run(prog, NULL);
     thrd->size = filesize;
     sched_start();     // Jump to thread queue
@@ -180,7 +174,4 @@ void command_echoat(int argc, char** argv) {
     uint64_t seconds = stoi(argv[2], NULL, 10);
     
     timer_add_event(echoat_timer_event, (void *)message, strlen(message) + 1, timer_second_to_tick(seconds));
-}
-void command_sched(int argc, char** argv) {
-    schedule();    
 }

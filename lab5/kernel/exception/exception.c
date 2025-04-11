@@ -7,14 +7,14 @@
 #include <stddef.h>
 
 void el1t_64_sync_handler(void *regs) {
-    uart_dbg_printf("el1t_64_sync_handler\n");
+    uart_dbg_printf("el1t_64_sync_handler ");
 }
 void el1t_64_irq_handler(void *regs) {}
 void el1t_64_fiq_handler(void *regs) {}
 void el1t_64_error_handler(void *regs) {}
 
 void el1h_64_sync_handler(void *regs) {
-    uart_dbg_printf("el1h_64_sync_handler\n");
+    uart_dbg_printf("el1h_64_sync_handler ");
 }
 void el1h_64_irq_handler(void *regs) {
     irq_handle();

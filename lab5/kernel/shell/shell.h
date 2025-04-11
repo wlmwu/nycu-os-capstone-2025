@@ -1,7 +1,7 @@
 #ifndef SHELL_H_
 #define SHELL_H_
 
-#define NUM_CMD 9
+#define NUM_CMD 8
 #define LEN_CMD_NAME_MAX 16
 #define LEN_CMD_HELP_MAX 128
 
@@ -26,7 +26,6 @@ void command_ls(int, char**);
 void command_cat(int, char**);
 void command_exec(int, char**);
 void command_echoat(int, char**);
-void command_sched(int, char**);
 
 static const shell_cmd_t kCmds[NUM_CMD] = {
     {.command = "help", .help = "Print all available commands", .func = command_help},
@@ -37,7 +36,6 @@ static const shell_cmd_t kCmds[NUM_CMD] = {
     {.command = "cat", .help = "Display file contents", .func = command_cat},
     {.command = "exec", .help = "Execute a user program", .func = command_exec},
     {.command = "echoat", .help = "Print a message after a delay", .func = command_echoat},
-    {.command = "sc", .help = "Call schedule() (temp command)", .func = command_sched},
 };
 
 void shell_init();

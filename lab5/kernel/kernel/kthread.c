@@ -24,7 +24,7 @@ static void kthread_fn_wrapper() {
         "msr    sp_el0, %[usp]  \n"     // Set user stack pointer
         "msr    elr_el1, %[pc]  \n"     // Set return address to user program
         "msr    spsr_el1, xzr   \n"     // Enable interrupt in EL0
-        "mov    sp, %[ksp]      \n"     // When SVC, `sp` restore immediately to what it was before ERET (i.e., `ksp` here). So this `ksp` is used for the save/load operations during EL transition
+        "mov    sp, %[ksp]      \n"     // When SVC, `sp` restores immediately to what it was before ERET (i.e., `ksp` here). So this `ksp` is used for the save/load operations during EL transition
         "mov    lr, %[lr]       \n"     // Afte ERET, program jumps to `lr`, so user program can exit without explicitly calling `exit()`
         "mov    x0, %[args]     \n"     
         "eret                   \n"
@@ -49,7 +49,6 @@ sched_task_t* kthread_create(sched_fn_t fn, void *args) {
     thrd->context.pc = (unsigned long)kthread_fn_wrapper;
     thrd->context.sp = (unsigned long)stack_top;
     thrd->context.fp = (unsigned long)thrd->context.sp;
-    // uart_dbg_printf("Kthread %x creates stack %p\n", thrd, thrd->context.sp);
 
     return thrd;
 }

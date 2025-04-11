@@ -113,7 +113,6 @@ void timer_event_destruct(timer_event_t *event) {
 
 void timer_add_event(timer_callback_fn_t fn, void *args, size_t argsize, uint64_t duration) {
     uint64_t expire_tick = duration + timer_get_current_tick();
-    // uint64_t expire_tick = timer_second_to_tick(duration) + timer_get_current_tick();
     timer_event_t *event = timer_event_construct(fn, args, argsize, expire_tick);
 
     pq_push(timer_event_queue, (void*)event);

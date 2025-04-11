@@ -51,14 +51,6 @@ static inline bool is_user_fn(void *fn) {
     return !((uintptr_t)fn >= (uintptr_t)(&_start) && (uintptr_t)fn <= (uintptr_t)(&_end));
 }  
 
-static inline void call_sys_yield() {
-    asm volatile(
-        "mov    x8, %[x8]   \n"
-        "svc    0           \n" 
-        :: [x8] "r" (SYS_YIELD)
-    );
-}
-
 void idle() {
     while (1) {
         sched_task_t *thrd, *tmp;
@@ -71,7 +63,6 @@ void idle() {
                 kfree(thrd);
             }
         }
-        // call_sys_yield();
     }
 } 
 
