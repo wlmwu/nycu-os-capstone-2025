@@ -25,10 +25,18 @@ void timer_irq_handle();
 void timer_set_tick(uint64_t tick);
 
 uint64_t timer_get_current_tick();
+uint64_t timer_get_current_freq();
 uint64_t timer_second_to_tick(uint64_t second);
 uint64_t timer_tick_to_second(uint64_t tick);
 
-
+/**
+ * @brief Adds a new timer event to the timer event queue.
+ *
+ * @param fn        The callback function to be executed when the timer event expires.
+ * @param args      A pointer to the arguments to be passed to the callback function.
+ * @param argsize   The size of the arguments in bytes.
+ * @param duration  The duration (in ticks) until the timer event expires.
+ */
 void timer_add_event(timer_callback_fn_t fn, void *args, size_t argsize, uint64_t duration);
 
 

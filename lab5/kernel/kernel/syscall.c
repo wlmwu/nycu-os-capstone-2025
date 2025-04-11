@@ -9,7 +9,7 @@
 #include "mailbox.h"
 
 int sys_getpid(trapframe_t *tf) {
-    uart_dbg_printf("\033[1;95mSyscall GetPID\033[0m\n");
+    // uart_dbg_printf("\033[1;95mSyscall GetPID\033[0m\n");
     sched_task_t *curr = sched_get_current();
     uint32_t pid = (uintptr_t)curr;
     return pid;
@@ -35,7 +35,7 @@ int sys_write(trapframe_t *tf) {
     return tf->x[1];
 }
 int sys_exec(trapframe_t *tf) {
-    uart_dbg_printf("\033[1;95mSyscall Exec\033[0m\n");
+    // uart_dbg_printf("\033[1;95mSyscall Exec\033[0m\n");
     char *filename = (char*)(tf->x[0]);
     cpio_newc_header_t *hptr = cpio_get_file_by_name(filename);
     if (!hptr) {
@@ -48,7 +48,7 @@ int sys_exec(trapframe_t *tf) {
     cpio_get_file(hptr, NULL, &filesize, &filedata);
     
     void *prog = kmalloc(filesize);
-    uart_dbg_printf("Load prog %p, size %u\n", prog, filesize);
+    // uart_dbg_printf("Load prog %p, size %u\n", prog, filesize);
     memcpy(prog, filedata, filesize);
 
     sched_task_t *curr = sched_get_current();
@@ -61,7 +61,7 @@ int sys_exec(trapframe_t *tf) {
     return tf->x[0];
 }
 int sys_fork(trapframe_t *tf) {
-    uart_dbg_printf("\033[1;95mSyscall Fork %p\033[0m\n", sched_get_current());
+    // uart_dbg_printf("\033[1;95mSyscall Fork %p\033[0m\n", sched_get_current());
     sched_task_t *parent = sched_get_current();
     sched_task_t *child = kthread_run(parent->fn, parent->args);
     child->size = parent->size;
@@ -96,18 +96,18 @@ childret:
     }
 }
 int sys_exit(trapframe_t *tf) {
-    uart_dbg_printf("\033[1;95mSyscall Exit\033[0m\n");
+    // uart_dbg_printf("\033[1;95mSyscall Exit\033[0m\n");
     kthread_exit();
     return 0;
 }
 int sys_mboxcall(trapframe_t *tf) {
-    uart_dbg_printf("\033[1;95mSyscall Mbox\033[0m\n");
+    // uart_dbg_printf("\033[1;95mSyscall Mbox\033[0m\n");
     unsigned char channel = tf->x[0];
     unsigned int *mbox = (unsigned int*)(tf->x[1]);
     return mbox_call(mbox, channel);
 }
 int sys_kill(trapframe_t *tf) {
-    uart_dbg_printf("\033[1;95mSyscall Kill\033[0m\n");
+    // uart_dbg_printf("\033[1;95mSyscall Kill\033[0m\n");
     int pid = tf->x[0];
     sched_task_t *thrd = sched_get_task(pid);
     if (thrd) {
@@ -116,7 +116,7 @@ int sys_kill(trapframe_t *tf) {
     return 0;
 }
 int sys_yield(trapframe_t *tf) {
-    uart_dbg_printf("\033[1;95mSyscall Yield\033[0m\n");
+    // uart_dbg_printf("\033[1;95mSyscall Yield\033[0m\n");
     schedule();
     return 0;
 }

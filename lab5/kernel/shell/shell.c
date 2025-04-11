@@ -160,7 +160,7 @@ void command_exec(int argc, char **argv) {
     cpio_get_file(hptr, NULL, &filesize, &filedata);
     
     void *prog = kmalloc(filesize);
-    uart_dbg_printf("Load prog %p, size %u\n", prog, filesize);
+    // uart_dbg_printf("Load prog %p, size %u\n", prog, filesize);
     memcpy(prog, filedata, filesize);
     sched_task_t *thrd = kthread_run(prog, NULL);
     thrd->size = filesize;
@@ -179,7 +179,7 @@ void command_echoat(int argc, char** argv) {
     char *message = argv[1];
     uint64_t seconds = stoi(argv[2], NULL, 10);
     
-    timer_add_event(echoat_timer_event, (void *)message, strlen(message) + 1, seconds);
+    timer_add_event(echoat_timer_event, (void *)message, strlen(message) + 1, timer_second_to_tick(seconds));
 }
 void command_sched(int argc, char** argv) {
     schedule();    

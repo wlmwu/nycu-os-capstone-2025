@@ -40,7 +40,7 @@ clean:
 	rm -rf $(BUILD_DIR) $(ELF) $(OUTPUT)
 
 QEMU = qemu-system-aarch64
-QEMUFLAGS = -M raspi3b -kernel $(OUTPUT) -serial null -display none -initrd $(CPIO_ARCHIVE) -dtb $(DT_ARCHIVE)
+QEMUFLAGS = -M raspi3b -kernel $(OUTPUT) -serial null -initrd $(CPIO_ARCHIVE) -dtb $(DT_ARCHIVE)
 
 QEMUFLAGS += $(if $(findstring PTY,$(MAKECMDGOALS)), -serial pty, -serial stdio)
 QEMUFLAGS += $(if $(findstring GDB,$(MAKECMDGOALS)), -S -s,)

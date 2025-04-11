@@ -13,6 +13,11 @@ static bool timer_event_comp(void *newn, void *n) {
 void timer_init() {
     timer_event_queue = (priority_queue_t*)malloc(sizeof(priority_queue_t));
     pq_init(timer_event_queue, timer_event_comp);
+    
+    uint64_t cntkctl_el1;
+    asm volatile("mrs %0, cntkctl_el1" : "=r"(cntkctl_el1));
+    cntkctl_el1 |= 1;
+    asm volatile("msr cntkctl_el1, %0" :: "r"(cntkctl_el1));
 }
 
 void timer_set_tick(uint64_t tick) {
@@ -64,6 +69,12 @@ uint64_t timer_get_current_tick() {
     return cntpct;
 }
 
+uint64_t timer_get_current_freq() {
+    uint64_t cntfrq;
+    asm volatile("mrs %[pct], cntfrq_el0\n\t" : [pct] "=r"(cntfrq));    // Get the timer's current count (total number of ticks since system boot)
+    return cntfrq;
+}
+
 uint64_t timer_second_to_tick(uint64_t second) {
     uint64_t cntfrq;
     asm volatile("mrs %[frq], cntfrq_el0" : [frq] "=r"(cntfrq) );       // Read the timer frequency
@@ -101,12 +112,13 @@ void timer_event_destruct(timer_event_t *event) {
 }
 
 void timer_add_event(timer_callback_fn_t fn, void *args, size_t argsize, uint64_t duration) {
-    uint64_t expire_tick = timer_second_to_tick(duration) + timer_get_current_tick();
+    uint64_t expire_tick = duration + timer_get_current_tick();
+    // uint64_t expire_tick = timer_second_to_tick(duration) + timer_get_current_tick();
     timer_event_t *event = timer_event_construct(fn, args, argsize, expire_tick);
 
     pq_push(timer_event_queue, (void*)event);
 
-    uart_printf("Set event at %u sec, currently at %u sec.\n", timer_tick_to_second(event->expire_tick), timer_tick_to_second(timer_get_current_tick()));
+    // uart_printf("Set event at %u sec, currently at %u sec.\n", timer_tick_to_second(event->expire_tick), timer_tick_to_second(timer_get_current_tick()));
 
     if (pq_top(timer_event_queue) == (void*)event) {
         timer_set_tick(event->expire_tick);

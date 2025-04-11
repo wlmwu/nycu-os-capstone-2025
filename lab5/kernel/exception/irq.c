@@ -9,7 +9,7 @@ static priority_queue_t *irq_task_queue;
 static irq_task_t *irq_handling_task;
 
 static bool irq_task_comp(void *newn, void *n) {
-    return ((irq_task_t*)newn)->priority < ((irq_task_t*)n)->priority;
+    return ((irq_task_t*)newn)->priority <= ((irq_task_t*)n)->priority;
 }
 
 void irq_init() {

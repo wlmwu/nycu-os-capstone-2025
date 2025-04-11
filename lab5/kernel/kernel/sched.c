@@ -7,6 +7,8 @@
 #include "slab.h"
 #include "syscall.h"
 #include "shell.h"
+#include "timer.h"
+#include "irq.h"
 #include <stdbool.h>
 
 static LIST_HEAD(sched_queue);      // Contain all threads
@@ -19,7 +21,6 @@ static void context_switch(sched_task_t *prev, sched_task_t *next) {
 
 void schedule() {
     if (list_empty(&sched_queue)) {
-        uart_printf("Error: run queue is empty\n");
         return;
     }
 
@@ -58,7 +59,7 @@ static inline void call_sys_yield() {
     );
 }
 
-static void idle() {
+void idle() {
     while (1) {
         sched_task_t *thrd, *tmp;
         list_for_each_entry_safe(thrd, tmp, &sched_queue, list) {
@@ -70,13 +71,22 @@ static void idle() {
                 kfree(thrd);
             }
         }
-        call_sys_yield();
+        // call_sys_yield();
     }
 } 
 
+static void periodic_schedule() {
+    uint64_t freq = timer_get_current_freq();
+    timer_add_event(periodic_schedule, NULL, 0, freq >> 5);
+    schedule();
+}
+
+void sched_init() {
+    timer_add_event(periodic_schedule, NULL, 0, 1);
+}
+
 void sched_start() {
     kthread_run(idle, NULL);
-    schedule();
 }
 
 sched_task_t* sched_get_task(int taskid) {
