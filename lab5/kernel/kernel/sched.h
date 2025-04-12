@@ -27,17 +27,17 @@ struct sched_context {
 typedef void (*sched_fn_t)(void *args);
 
 typedef struct sched_task {
-    struct sched_context context;
-    enum { kThRunnable, kThDead } state;
+    struct sched_context context;			// Saved CPU context for context switch
+    enum { kThRunnable, kThDead } state;	// Current state
     void *ustack;                           // User stack bottom
     void *kstack;                           // Kernel stack bottom
-    sched_fn_t fn;
-    void *args;
-    size_t size;
-	sighandler_t sighandlers[NSIG];
-    uint64_t sigpending;
-    trapframe_t *sigcontext;
-	struct list_head list;
+    sched_fn_t fn;							// Entry point address of the user program
+    void *args;								// Argument passed to the user program's entry point (fn)
+    size_t size;							// Size of the user program
+	sighandler_t sighandlers[NSIG];			// Array of signal handlers registered by the user
+    uint64_t sigpending;					// Bitmask of pending signals for the task
+    trapframe_t *sigcontext;				// Saved context before signal handler execution
+	struct list_head list;					// List node for linking all tasks
 } sched_task_t;
 
 void schedule();

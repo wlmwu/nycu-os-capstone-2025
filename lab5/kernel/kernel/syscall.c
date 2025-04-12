@@ -9,12 +9,13 @@
 #include "mailbox.h"
 #include "irq.h"
 
-int sys_getpid(trapframe_t *tf) {
+static int sys_getpid(trapframe_t *tf) {
     sched_task_t *curr = sched_get_current();
     uint32_t pid = (uintptr_t)curr;
     return pid;
 }
-int sys_read(trapframe_t *tf) {
+
+static int sys_read(trapframe_t *tf) {
     char *ptr = (char*)(tf->x[0]);
     size_t sz = tf->x[1];
     while (sz--) {
@@ -23,7 +24,8 @@ int sys_read(trapframe_t *tf) {
     }
     return tf->x[1];
 }
-int sys_write(trapframe_t *tf) {
+
+static int sys_write(trapframe_t *tf) {
     char *str = (char*)(tf->x[0]);
     size_t sz = tf->x[1];
     while ((*str) && (sz--)) {
@@ -32,7 +34,8 @@ int sys_write(trapframe_t *tf) {
     
     return tf->x[1];
 }
-int sys_exec(trapframe_t *tf) {
+
+static int sys_exec(trapframe_t *tf) {
     char *filename = (char*)(tf->x[0]);
     cpio_newc_header_t *hptr = cpio_get_file_by_name(filename);
     if (!hptr) {
@@ -56,7 +59,8 @@ int sys_exec(trapframe_t *tf) {
     tf->elr = (uintptr_t)curr->fn;
     return tf->x[0];
 }
-int sys_fork(trapframe_t *tf) {
+
+static int sys_fork(trapframe_t *tf) {
     irq_disable();
     sched_task_t *parent = sched_get_current();
     sched_task_t *child = kthread_run(parent->fn, parent->args);
@@ -95,27 +99,32 @@ childret:
         return 0;       // Return to the parent's trapframe, since `syscall_handle` was called with the parent's trapframe as an argument
     }
 }
-int sys_exit(trapframe_t *tf) {
+
+static int sys_exit(trapframe_t *tf) {
     kthread_exit();
     return 0;
 }
-int sys_mboxcall(trapframe_t *tf) {
+
+static int sys_mboxcall(trapframe_t *tf) {
     unsigned char channel = tf->x[0];
     unsigned int *mbox = (unsigned int*)(tf->x[1]);
     return mbox_call(mbox, channel);
 }
-int sys_kill(trapframe_t *tf) {
+
+static int sys_kill(trapframe_t *tf) {
     int pid = tf->x[0];
     sched_task_t *thrd = sched_get_task(pid);
     if (!thrd) return -1;
     thrd->state = kThDead;
     return 0;
 }
-int sys_yield(trapframe_t *tf) {
+
+static int sys_yield(trapframe_t *tf) {
     schedule();
     return 0;
 }
-int sys_signal(trapframe_t *tf) {
+
+static int sys_signal(trapframe_t *tf) {
     int sig = tf->x[0];
     sighandler_t handler = (sighandler_t)tf->x[1];
     sched_task_t *curr = sched_get_current();
@@ -123,7 +132,8 @@ int sys_signal(trapframe_t *tf) {
     curr->sighandlers[sig] = handler;
     return 0;
 }
-int sys_sigkill(trapframe_t *tf) {
+
+static int sys_sigkill(trapframe_t *tf) {
     int pid = tf->x[0];
     int sig = tf->x[1];
     sched_task_t *thrd = sched_get_task(pid);
@@ -131,7 +141,8 @@ int sys_sigkill(trapframe_t *tf) {
     thrd->sigpending |= (1 << sig);
     return 0;
 }
-int sys_sigreturn(trapframe_t *tf) {
+
+static int sys_sigreturn(trapframe_t *tf) {
     sched_task_t *curr = sched_get_current();
     if (curr->sigcontext) {
         *tf = *curr->sigcontext;
