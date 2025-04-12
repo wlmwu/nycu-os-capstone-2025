@@ -2,7 +2,6 @@
 #include "sched.h"
 #include "syscall.h"
 #include "slab.h"
-#include "mini_uart.h"
 
 void signal_check(trapframe_t *tf) {
     sched_task_t *curr = sched_get_current();

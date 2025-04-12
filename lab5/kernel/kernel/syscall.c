@@ -7,6 +7,7 @@
 #include "cpio.h"
 #include "slab.h"
 #include "mailbox.h"
+#include "irq.h"
 
 int sys_getpid(trapframe_t *tf) {
     sched_task_t *curr = sched_get_current();
@@ -56,6 +57,7 @@ int sys_exec(trapframe_t *tf) {
     return tf->x[0];
 }
 int sys_fork(trapframe_t *tf) {
+    irq_disable();
     sched_task_t *parent = sched_get_current();
     sched_task_t *child = kthread_run(parent->fn, parent->args);
     child->size = parent->size;
@@ -84,6 +86,7 @@ childret:
     sched_task_t *curr = sched_get_current();
     if (curr == parent) {
         child->context.pc = (uintptr_t)(&&childret);    // https://gcc.gnu.org/onlinedocs/gcc/Labels-as-Values.html
+        irq_enable();
         return (uintptr_t)child;
     } else {
         tf = (trapframe_t*)((char*)tf + kstack_offset);
@@ -104,9 +107,8 @@ int sys_mboxcall(trapframe_t *tf) {
 int sys_kill(trapframe_t *tf) {
     int pid = tf->x[0];
     sched_task_t *thrd = sched_get_task(pid);
-    if (thrd) {
-        thrd->state = kThDead;
-    }
+    if (!thrd) return -1;
+    thrd->state = kThDead;
     return 0;
 }
 int sys_yield(trapframe_t *tf) {
