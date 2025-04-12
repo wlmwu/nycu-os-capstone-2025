@@ -15,12 +15,12 @@ void el1t_64_fiq_handler(void *regs);
 void el1t_64_error_handler(void *regs);
 
 void el1h_64_sync_handler(void *regs);
-void el1h_64_irq_handler(void *regs);
+void el1h_64_irq_handler(trapframe_t *tf);
 void el1h_64_fiq_handler(void *regs);
 void el1h_64_error_handler(void *regs);
 
 void el0t_64_sync_handler(trapframe_t *tf);
-void el0t_64_irq_handler(void *regs);
+void el0t_64_irq_handler(trapframe_t *tf);
 void el0t_64_fiq_handler(void *regs);
 void el0t_64_error_handler(void *regs);
 

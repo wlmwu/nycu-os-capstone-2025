@@ -2,6 +2,8 @@
 #define SCHED_H_
 
 #include "list.h"
+#include "signal.h"
+#include "exception.h"
 #include <stdint.h>
 #include <stddef.h>
 
@@ -32,6 +34,9 @@ typedef struct sched_task {
     sched_fn_t fn;
     void *args;
     size_t size;
+	sighandler_t sighandlers[NSIG];
+    uint64_t sigpending;
+    trapframe_t *sigcontext;
 	struct list_head list;
 } sched_task_t;
 

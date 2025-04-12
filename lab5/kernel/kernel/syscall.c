@@ -60,6 +60,9 @@ int sys_fork(trapframe_t *tf) {
     sched_task_t *child = kthread_run(parent->fn, parent->args);
     child->size = parent->size;
 
+    memcpy(child->sighandlers, parent->sighandlers, sizeof(parent->sighandlers));
+    child->sigpending = parent->sigpending;
+
     int32_t kstack_offset = (int32_t)child->kstack - (int32_t)parent->kstack;
     int32_t ustack_offset = (int32_t)child->ustack - (int32_t)parent->ustack;
     memcpy(child->kstack, parent->kstack, SCHED_STACK_SIZE);
@@ -110,6 +113,31 @@ int sys_yield(trapframe_t *tf) {
     schedule();
     return 0;
 }
+int sys_signal(trapframe_t *tf) {
+    int sig = tf->x[0];
+    sighandler_t handler = (sighandler_t)tf->x[1];
+    sched_task_t *curr = sched_get_current();
+    if (sig < 0 || sig >= NSIG) return -1;
+    curr->sighandlers[sig] = handler;
+    return 0;
+}
+int sys_sigkill(trapframe_t *tf) {
+    int pid = tf->x[0];
+    int sig = tf->x[1];
+    sched_task_t *thrd = sched_get_task(pid);
+    if (!thrd || sig < 0 || sig >= NSIG) return -1;
+    thrd->sigpending |= (1 << sig);
+    return 0;
+}
+int sys_sigreturn(trapframe_t *tf) {
+    sched_task_t *curr = sched_get_current();
+    if (curr->sigcontext) {
+        *tf = *curr->sigcontext;
+        kfree(curr->sigcontext);
+        curr->sigcontext = NULL;
+    }
+    return 0;
+}
 
 static int (*syscalls[])(trapframe_t *tf) = {
     [SYS_GETPID]    sys_getpid,
@@ -121,6 +149,9 @@ static int (*syscalls[])(trapframe_t *tf) = {
     [SYS_MBOXCALL]  sys_mboxcall,
     [SYS_KILL]      sys_kill,
     [SYS_YIELD]     sys_yield,
+    [SYS_SIGNAL]    sys_signal,
+    [SYS_SIGKILL]   sys_sigkill,
+    [SYS_SIGRETURN] sys_sigreturn,
 };
 
 void syscall_handle(trapframe_t *tf) {
