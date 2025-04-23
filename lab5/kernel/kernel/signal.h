@@ -52,7 +52,7 @@
 #define	SIG_IGN		(void (*)(int))1    /* signal ignore */
 #define	SIG_ERR		(void (*)(int))-1   /* signal error */
 
-typedef void (*sighandler_t)(void);
+typedef void (*sighandler_t)(int);
 
 #include "exception.h"
 

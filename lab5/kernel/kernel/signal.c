@@ -22,8 +22,8 @@ static inline void call_sys_sigreturn() {
     );
 }
 
-static void signal_handle_wrapper(sighandler_t handler) {
-    handler();
+static void signal_handle_wrapper(sighandler_t handler, int signo) {
+    handler(signo);
     call_sys_sigreturn();
 }
 
@@ -38,5 +38,6 @@ void signal_handle(int signo, trapframe_t *tf) {
         *curr->sigcontext = *tf;
         tf->elr = (uintptr_t)signal_handle_wrapper;
         tf->x[0] = (uintptr_t)handler;
+        tf->x[1] = signo;
     }
 }

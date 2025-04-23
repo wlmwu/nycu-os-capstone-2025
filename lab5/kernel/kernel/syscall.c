@@ -52,7 +52,8 @@ static int sys_exec(trapframe_t *tf) {
 
     sched_task_t *curr = sched_get_current();
     curr->size = filesize;
-    kfree(curr->fn);                            // Assume `curr` is a user process
+    // kfree(curr->fn);                            // Child may use the same memory for the program.
+    memset(curr->sighandlers, 0, sizeof(curr->sighandlers));
 
     curr->fn = prog;
     tf->sp = (uintptr_t)curr->ustack + SCHED_STACK_SIZE;
