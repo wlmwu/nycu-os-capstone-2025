@@ -50,6 +50,10 @@ sched_task_t* kthread_create(sched_fn_t fn, void *args) {
     thrd->context.sp = (unsigned long)stack_top;
     thrd->context.fp = (unsigned long)thrd->context.sp;
 
+    memset(thrd->sighandlers, 0, sizeof(thrd->sighandlers));
+    thrd->sigpending = 0ULL;
+    thrd->sigcontext = NULL;
+    
     return thrd;
 }
 

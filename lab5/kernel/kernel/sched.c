@@ -73,6 +73,7 @@ static void periodic_schedule() {
 }
 
 void sched_init() {
+    sched_set_current(NULL);
     timer_add_event(periodic_schedule, NULL, 0, 1);
 }
 

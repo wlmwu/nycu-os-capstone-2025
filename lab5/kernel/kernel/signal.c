@@ -5,7 +5,7 @@
 
 void signal_check(trapframe_t *tf) {
     sched_task_t *curr = sched_get_current();
-    for (int sig = 0; sig < NSIG && curr->sigpending; ++sig) {
+    for (int sig = 0; curr && sig < NSIG && curr->sigpending; ++sig) {
         if (curr->sigpending & (1 << sig)) {
             curr->sigpending &= ~(1 << sig);
             signal_handle(sig, tf);

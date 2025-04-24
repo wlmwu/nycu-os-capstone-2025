@@ -18,12 +18,14 @@
         stp x26, x27, [sp ,16 * 13]
         stp x28, x29, [sp ,16 * 14]
         
-        mrs x1, sp_el0
-        stp x30, x1, [sp, 16 * 15]
+        mrs x2, sp_el0
+        stp x30, x2, [sp, 16 * 15]
 
         mrs x2, elr_el1
         mrs x3, spsr_el1
         stp x2, x3, [sp, 16 * 16]         // Store elr_el1/spsr_el1 for nested interrupt
+        
+        ldp x2, x3, [sp ,16 * 1]
     .endm
 
     // load general registers from stack
@@ -44,12 +46,15 @@
         ldp x26, x27, [sp ,16 * 13]
         ldp x28, x29, [sp ,16 * 14]
         
-        ldp x30, x1, [sp, 16 * 15]
-        msr sp_el0, x1
+        ldp x30, x2, [sp, 16 * 15]
+        msr sp_el0, x2
 
         ldp x2, x3, [sp, 16 * 16]         // Load elr_el1/spsr_el1 from stack
         msr elr_el1, x2
         msr spsr_el1, x3
+
+        ldp x2, x3, [sp ,16 * 1]
+
         add sp, sp, 34 * 8
     .endm
 
