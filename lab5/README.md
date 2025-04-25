@@ -1,4 +1,4 @@
-# Lab 4: Allocator
+# Lab 5: Thread and User Process
 
 Here implements a bootloader and a kernel. The bootloader is a kernel that loads the real kernel image, and the kernel performs essential system operations to get the device running. Additionally, a Python tool is provided for transferring the kernel image to the bootloader via UART.
 
@@ -17,10 +17,19 @@ python host_tools/sendimg.py <KERNEL_PATH> -p <SERIAL_PORT> -b <BAUDRATE>
 ```
 
 ## Root File System
-A sample root file system, containing files that the kernel can access once it is booted.  
+This directory contains the initial set of files that are packaged into an `initramfs.cpio`. The kernel will access files in `initramfs.cpio` upon boot.
 - Location: `rootfs/`  
 - Example files: `file1.txt`, `fileTwoPlusALongName.txt`
 
+While the repository might show a limited number of files, the actual `initramfs.cpio` includes:
+- `file1.txt`
+- `fileTwoPlusALongName.txt`
+- `userprog.img`: A user program created by `users/user1`.
+- `forktest.img`:  A user program created by `users/user2`.
+- `syscall.img`: A user program provided by the lab.
+
 ## User Program
-This folder contains a program designed to test exception handling within the kernel.
-- Location: `user/`
+This directory now contains multiple user programs designed to test different kernel functionalities:
+- Location: `users/`
+    -  `user1`: This program creates `userprog.img` to test the kernel's exception handling mechanisms.
+    - `user2`: This program creates `forktest.img` to test the implementation of the system calls.
