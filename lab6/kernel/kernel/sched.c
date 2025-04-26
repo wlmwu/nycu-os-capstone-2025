@@ -12,6 +12,7 @@
 #include <stdbool.h>
 
 static LIST_HEAD(sched_queue);      // Contain all threads
+static sched_task_t init;           // Placeholder task to avoid writing to 0x0 on the first context switch
 
 extern void cpu_switch_to(void *prev_ctx, void *next_ctx);      // Defined in entry.S
 static void context_switch(sched_task_t *prev, sched_task_t *next) {  
@@ -73,11 +74,12 @@ static void periodic_schedule() {
 }
 
 void sched_init() {
-    sched_set_current(NULL);
+    sched_set_current(&init);
     timer_add_event(periodic_schedule, NULL, 0, 1);
 }
 
 void sched_start() {
+    sched_set_current(&init);
     kthread_run(idle, NULL);
 }
 

@@ -8,12 +8,19 @@ static void *cpio_start;
 static void *cpio_end;
 
 cpio_newc_header_t* cpio_get_file(cpio_newc_header_t *hptr, char **pathname, unsigned int *filesize, char **filedata) {
-    if (strncmp(hptr->c_magic, CPIO_NEWC_MAGIC, sizeof(hptr->c_magic)) != 0) {
-        return 0;
+    if (!hptr || strncmp(hptr->c_magic, CPIO_NEWC_MAGIC, sizeof(hptr->c_magic)) != 0) {
+        return NULL;
     }
-    unsigned int pathname_size = hexstr2uint(hptr->c_namesize);
-    unsigned fsize;
+    unsigned int fsize;
     if (!filesize) filesize = &fsize;
+
+    char *pfdata;
+    if (!filedata) filedata = &pfdata;
+
+    char *ppname;
+    if (!pathname) pathname = &ppname;
+
+    unsigned int pathname_size = hexstr2uint(hptr->c_namesize);
     *filesize = hexstr2uint(hptr->c_filesize);
 
     *pathname = (char*)hptr + sizeof(cpio_newc_header_t);

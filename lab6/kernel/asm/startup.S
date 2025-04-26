@@ -1,3 +1,5 @@
+#include "mmu.h"
+
 .section ".text.boot"
 .globl _start
 
@@ -21,6 +23,9 @@ master:
 
     ldr    x2, =_stack_end      // Copy the end of the stack into a general purpose register first
     mov    sp, x2               // Load the stack pointer with the register
+
+    bl     enable_mmu
+
     bl     main                 // Jump to the "main" (defined in .c)
     b      hang                    
 
@@ -51,3 +56,38 @@ core_timer_enable:
     mov    x2, 1
     msr    cntp_ctl_el0, x2     // Timer enabled
     ret
+
+enable_mmu:
+    // Configure TCR
+    ldr    x1, =TCR_CONFIG_DEFAULT
+    msr    tcr_el1, x1
+    
+    // Configure MAIR
+    ldr    x1, =( (MAIR_DEVICE_nGnRnE << (MAIR_IDX_DEVICE_nGnRnE * 8)) | (MAIR_NORMAL_NOCACHE << (MAIR_IDX_NORMAL_NOCACHE * 8)) )
+    msr    mair_el1, x1
+
+    // Setup page tables
+    ldr    x1, =PGTABLE_START_ADDR      // x1: PGD address
+    add    x2, x1, #PAGE_SIZE           // x2: PUD address
+
+    // PGD entry (point to PUD)
+    ldr    x3, =BOOT_PGD_ATTR
+    orr    x3, x2, x3                   // Combine the physical address of next level page with attribute
+    str    x3, [x1]                     // Store to the first entry of PGD
+
+    // PUD entries (point to 1GB block)
+    ldr    x3, =BOOT_PUD_ATTR
+    mov    x4, 0x00000000               // First entry (1GB block)
+    orr    x4, x3, x4
+    str    x4, [x2]
+    mov    x4, 0x40000000               // Second entry (1GB block)
+    orr    x4, x3, x4
+    str    x4, [x2, 8]
+
+    msr    ttbr0_el1, x1                // Load PGD
+    
+    mrs    x3, sctlr_el1
+    orr    x3 , x3, 1
+    msr    sctlr_el1, x3                // enable MMU
+    
+    ret    

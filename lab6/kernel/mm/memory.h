@@ -7,6 +7,9 @@
 #define SPIN_TABLE_START 0x0000
 #define SPIN_TABLE_END 0x1000
 
+#define PAGE_TABLE_START 0x0000
+#define PAGE_TABLE_END 0x2000
+
 extern unsigned long _start;
 extern unsigned long _end;
 
@@ -41,7 +44,7 @@ static inline void memory_reserve(uintptr_t start, uintptr_t end) {
  *       calling this function.
  */
 static inline void memory_init() {
-    memory_reserve((uintptr_t)(SPIN_TABLE_START), (uintptr_t)(SPIN_TABLE_END));
+    memory_reserve((uintptr_t)(PAGE_TABLE_START), (uintptr_t)(PAGE_TABLE_END));
     memory_reserve((uintptr_t)(&_start), (uintptr_t)(&_end));
 
     buddy_init();
