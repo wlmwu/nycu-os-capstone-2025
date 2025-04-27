@@ -8,7 +8,7 @@
 #define SPIN_TABLE_END 0x1000
 
 #define PAGE_TABLE_START 0x1000
-#define PAGE_TABLE_END 0x3000
+#define PAGE_TABLE_END (PAGE_TABLE_START + (3 * PAGE_SIZE))
 
 extern unsigned long _start;
 extern unsigned long _end;

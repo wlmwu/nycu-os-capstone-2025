@@ -72,25 +72,10 @@ enable_mmu:
     ldr    x1, =( (MAIR_DEVICE_nGnRnE << (MAIR_IDX_DEVICE_nGnRnE * 8)) | (MAIR_NORMAL_NOCACHE << (MAIR_IDX_NORMAL_NOCACHE * 8)) )
     msr    mair_el1, x1
 
-    // Setup page tables
-    ldr    x1, =PGTABLE_START_ADDR      // x1: PGD address
-    add    x2, x1, #PAGE_SIZE           // x2: PUD address
-
-    // PGD entry (point to PUD)
-    ldr    x3, =BOOT_PGD_ATTR
-    orr    x3, x2, x3                   // Combine the physical address of next level page with attribute
-    str    x3, [x1]                     // Store to the first entry of PGD
-
-    // PUD entries (point to 1GB block)
-    ldr    x3, =BOOT_PUD_ATTR
-    mov    x4, 0x00000000               // First entry (1GB block)
-    orr    x4, x3, x4
-    str    x4, [x2]
-    mov    x4, 0x40000000               // Second entry (1GB block)
-    orr    x4, x3, x4
-    str    x4, [x2, 8]
-
-    msr    ttbr0_el1, x1                // Load PGD
-    msr    ttbr1_el1, x1
+    ldr    x2, =_pa_stack_end      // Copy the end of the stack into a general purpose register first
+    mov    sp, x2
+    stp    x0, x30, [sp, #-16]!    // Push DTB address and lr into stack
+    bl     mmu_init
+    ldp    x0, x30, [sp], #16
    
     ret    
