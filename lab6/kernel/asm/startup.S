@@ -13,6 +13,14 @@ hang:
 
 master:
     bl     from_el2_to_el1
+    bl     enable_mmu
+    mrs    x3, sctlr_el1
+    orr    x3 , x3, 1
+    msr    sctlr_el1, x3                // Enable MMU
+    
+    ldr    x1, =_va_trampoline
+    br     x1
+_va_trampoline: 
     bl     set_exception_vector_table
     bl     core_timer_enable
 
@@ -23,8 +31,6 @@ master:
 
     ldr    x2, =_stack_end      // Copy the end of the stack into a general purpose register first
     mov    sp, x2               // Load the stack pointer with the register
-
-    bl     enable_mmu
 
     bl     main                 // Jump to the "main" (defined in .c)
     b      hang                    
@@ -85,9 +91,6 @@ enable_mmu:
     str    x4, [x2, 8]
 
     msr    ttbr0_el1, x1                // Load PGD
-    
-    mrs    x3, sctlr_el1
-    orr    x3 , x3, 1
-    msr    sctlr_el1, x3                // enable MMU
-    
+    msr    ttbr1_el1, x1
+   
     ret    

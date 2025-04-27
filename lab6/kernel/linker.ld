@@ -1,7 +1,8 @@
 ENTRY(_start)
 
 SECTIONS {
-    . = 0x80000;          /* Start address where the program will be loaded */
+    . = 0xffff000000000000;   /* Kernel virtual base */
+    . += 0x80000;          /* Start address where the program will be loaded */
 
     .text : { *(.text.boot) *(.text) } /* text.boot is custom section. To specify bootloader code */
     .rodata : { *(.rodata) }

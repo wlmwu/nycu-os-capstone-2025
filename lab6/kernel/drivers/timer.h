@@ -1,7 +1,9 @@
 #ifndef TIMER_H_
 #define TIMER_H_
 
-#define CORE0_TIMERS_INTERRUPT_CONTROL 0x40000040
+#include "reg_base.h"
+
+#define CORE0_TIMERS_INTERRUPT_CONTROL (VA_BASE + 0x40000040)
 
 #include <stdint.h>
 #include <stddef.h>
