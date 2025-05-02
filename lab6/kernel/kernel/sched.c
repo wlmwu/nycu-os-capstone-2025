@@ -10,6 +10,8 @@
 #include "timer.h"
 #include "irq.h"
 #include <stdbool.h>
+#include "mmu.h"
+#include "proc.h"
 
 static LIST_HEAD(sched_queue);      // Contain all threads
 static sched_task_t init;           // Placeholder task to avoid writing to 0x0 on the first context switch
@@ -17,6 +19,7 @@ static sched_task_t init;           // Placeholder task to avoid writing to 0x0 
 extern void cpu_switch_to(void *prev_ctx, void *next_ctx);      // Defined in entry.S
 static void context_switch(sched_task_t *prev, sched_task_t *next) {  
     sched_set_current(next);
+    mmu_switch_to(next->pgd);
     cpu_switch_to(&prev->context, &next->context);
 }
 
@@ -80,7 +83,10 @@ void sched_init() {
 
 void sched_start() {
     sched_set_current(&init);
-    kthread_run(idle, NULL);
+    sched_task_t *thrd = kthread_create(idle, NULL);    // Run `idle` in EL1 
+    thrd->context.pc = (uintptr_t)idle;
+    thrd->pgd = PGTABLE_START_ADDR;
+    sched_enqueue_task(thrd);
 }
 
 sched_task_t* sched_get_task(int taskid) {

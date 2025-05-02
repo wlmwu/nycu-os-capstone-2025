@@ -1,5 +1,6 @@
 #include "slab.h"
 #include "buddy.h"
+#include "mmu.h"
 #include "list.h"
 #include <stddef.h>
 #include <stdint.h>
@@ -48,13 +49,12 @@ void *kmalloc(size_t size) {
     int pool_idx = pool_find(size);
     if (pool_idx < 0) {                     // Allocate a block if size is too large
         int order = order_find(size);
-        return page_alloc(order);
+        return (void*)PA_TO_VA(page_alloc(order));
     }
 
     if (list_empty(&pools[pool_idx])) {
         void *page = page_alloc(0);
         if (!page) return NULL;
-
 
         slab_header_t *slab_header = page;
         slab_header->chunk_size =  MAX_CHUNK_SIZE >> (NUM_POOLS - pool_idx - 1);
@@ -82,10 +82,11 @@ void *kmalloc(size_t size) {
 
     // uart_printf("\033[0;33m[Chunk]\tAllocate %p at chunk size %u\033[0m\n", chunk, slab_header->chunk_size);
 
-    return chunk;
+    return (void*)PA_TO_VA(chunk);
 }
 
 void kfree(void *ptr) {
+    ptr = (void*)VA_TO_PA(ptr);
     if (!ptr) return;
 
     uintptr_t slab_start = ((uintptr_t)ptr) & ~(PAGE_SIZE - 1);      // Mask lower bits

@@ -1,7 +1,8 @@
 #include "cpio.h"
 #include "utils.h"
 #include "mini_uart.h"
-#include "memory.h"
+#include "mm.h"
+#include "mmu.h"
 #include <stddef.h>
 
 static void *cpio_start;
@@ -66,10 +67,10 @@ cpio_newc_header_t* cpio_get_start_file() {
 
 void cpio_initramfs_callback(fdt32_t token, char *name, fdt32_t len, char *data) {
     if (token == FDT_PROP && strcmp(name, "linux,initrd-start") == 0) {
-        cpio_start = (void*)bswap32(*(uint32_t*)data);
+        cpio_start = (void*)PA_TO_VA(bswap32(*(uint32_t*)data));
     }
     if (token == FDT_PROP && strcmp(name, "linux,initrd-end") == 0) {
-        cpio_end = (void*)bswap32(*(uint32_t*)data);
+        cpio_end = (void*)PA_TO_VA(bswap32(*(uint32_t*)data));
     }
 }
 
@@ -79,6 +80,6 @@ void cpio_init() {
         uart_puts("Error: CPIO initialization failed.\n");
     }
     if (cpio_start && cpio_end) {
-        memory_reserve((uintptr_t)cpio_start, (uintptr_t)cpio_end);
+        mm_reserve(VA_TO_PA((uintptr_t)cpio_start), VA_TO_PA((uintptr_t)cpio_end));
     }
 }

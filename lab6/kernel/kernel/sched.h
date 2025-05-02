@@ -7,7 +7,6 @@
 #include <stdint.h>
 #include <stddef.h>
 
-#define SCHED_STACK_SIZE 4096
 struct sched_context {
     unsigned long x19;
 	unsigned long x20;
@@ -37,6 +36,7 @@ typedef struct sched_task {
 	sighandler_t sighandlers[NSIG];			// Array of signal handlers registered by the user
     uint64_t sigpending;					// Bitmask of pending signals for the task
     trapframe_t *sigcontext;				// Saved context before signal handler execution
+    uint64_t pgd;                           // PGD (physical address) of the process
 	struct list_head list;					// List node for linking all tasks
 } sched_task_t;
 

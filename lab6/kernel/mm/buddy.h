@@ -1,12 +1,12 @@
 #ifndef BUDDY_H_
 #define BUDDY_H_
 
+#include "mmu.h"
 #include <stdint.h>
 
 #define MAX_ORDER 11
 #define MEM_START 0x0
 #define MEM_END 0x3C000000
-#define PAGE_SIZE 4096
 #define MAX_PAGES ((MEM_END - MEM_START) / PAGE_SIZE)
 
 /**

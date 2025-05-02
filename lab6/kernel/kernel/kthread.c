@@ -5,6 +5,8 @@
 #include "utils.h"
 #include "syscall.h"
 #include "mini_uart.h"
+#include "proc.h"
+#include "mmu.h"
 #include <stddef.h>
 #include <stdbool.h>
 #include <stdint.h>
@@ -28,9 +30,9 @@ static void kthread_fn_wrapper() {
         "mov    lr, %[lr]       \n"     // Afte ERET, program jumps to `lr`, so user program can exit without explicitly calling `exit()`
         "mov    x0, %[args]     \n"     
         "eret                   \n"
-        :: [usp] "r" (thrd->ustack + SCHED_STACK_SIZE), [pc] "r" ((uintptr_t)thrd->fn), 
-           [ksp] "r" (thrd->kstack + SCHED_STACK_SIZE), [lr] "r" ((uintptr_t)call_sys_exit),
-           [args] "r" (thrd->args)
+        :: [usp] "r" (PROC_USTACK_BASE + PROC_STACK_SIZE), [pc] "r" (PROC_ENTRY_POINT), 
+           [ksp] "r" (thrd->kstack + PROC_STACK_SIZE), [lr] "r" ((uintptr_t)call_sys_exit),
+           [args] "r" (thrd->args), [pgd] "r" (PA_TO_VA(thrd->pgd))
     );
 }
 
@@ -39,13 +41,13 @@ sched_task_t* kthread_create(sched_fn_t fn, void *args) {
     memset(thrd, 0, sizeof(sched_task_t));
 
     thrd->state = kThRunnable;
-    thrd->ustack = kmalloc(SCHED_STACK_SIZE);
-    thrd->kstack = kmalloc(SCHED_STACK_SIZE);
+    thrd->ustack = kmalloc(PROC_STACK_SIZE);
+    thrd->kstack = kmalloc(PROC_STACK_SIZE);
     thrd->fn = fn;
     thrd->args = args;
     INIT_LIST_HEAD(&thrd->list);
     
-    uint64_t *stack_top = thrd->ustack + SCHED_STACK_SIZE;      // top: high addr, bottom: low addr
+    uint64_t *stack_top = thrd->ustack + PROC_STACK_SIZE;      // top: high addr, bottom: low addr
     thrd->context.pc = (unsigned long)kthread_fn_wrapper;
     thrd->context.sp = (unsigned long)stack_top;
     thrd->context.fp = (unsigned long)thrd->context.sp;

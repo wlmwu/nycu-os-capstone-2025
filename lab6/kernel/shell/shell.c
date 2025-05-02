@@ -7,6 +7,7 @@
 #include "kthread.h"
 #include "irq.h"
 #include "slab.h"
+#include "proc.h"
 
 void shell_init() {
     uart_puts(kWelcomeMsg);
@@ -141,23 +142,12 @@ void command_exec(int argc, char **argv) {
         uart_puts("Usage: exec <program.img>\n");
         return;
     }
-    char *target_filename = argv[1];
-    cpio_newc_header_t *hptr = cpio_get_file_by_name(target_filename);
-    if (!hptr) {
-        uart_puts(target_filename);
-        uart_puts(": No such file or directory\n");
-        return;
-    }
+    char *filename = argv[1];
+    void *prog = NULL;
+    size_t progsize = 0;
+    proc_load_prog(filename, &prog, &progsize);
+    proc_create(prog, NULL, progsize);
 
-    char *filedata;
-    uint32_t filesize = 0;
-    cpio_get_file(hptr, NULL, &filesize, &filedata);
-    
-    void *prog = kmalloc(filesize);
-    memcpy(prog, filedata, filesize);
-
-    sched_task_t *thrd = kthread_run(prog, NULL);
-    thrd->size = filesize;
     sched_start();     // Jump to thread queue
 }
 

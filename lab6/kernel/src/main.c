@@ -4,7 +4,7 @@
 #include "fdt.h"
 #include "irq.h"
 #include "timer.h"
-#include "memory.h"
+#include "mm.h"
 #include "sched.h"
 #include "kthread.h"
 #include "utils.h"
@@ -19,7 +19,7 @@ int main(void* arg) {   /* The value of arg is `x0` which is 0x8200000 in QEMU, 
     fdt_init(arg);
     cpio_init();
     
-    memory_init();
+    mm_init();
 
     sched_init();
 

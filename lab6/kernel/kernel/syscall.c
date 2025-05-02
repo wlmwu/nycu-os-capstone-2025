@@ -8,6 +8,7 @@
 #include "slab.h"
 #include "mailbox.h"
 #include "irq.h"
+#include "proc.h"
 
 static int sys_getpid(trapframe_t *tf) {
     sched_task_t *curr = sched_get_current();
@@ -56,7 +57,7 @@ static int sys_exec(trapframe_t *tf) {
     memset(curr->sighandlers, 0, sizeof(curr->sighandlers));
 
     curr->fn = prog;
-    tf->sp = (uintptr_t)curr->ustack + SCHED_STACK_SIZE;
+    tf->sp = (uintptr_t)curr->ustack + PROC_STACK_SIZE;
     tf->elr = (uintptr_t)curr->fn;
     return tf->x[0];
 }
@@ -72,8 +73,8 @@ static int sys_fork(trapframe_t *tf) {
 
     int32_t kstack_offset = (int32_t)child->kstack - (int32_t)parent->kstack;
     int32_t ustack_offset = (int32_t)child->ustack - (int32_t)parent->ustack;
-    memcpy(child->kstack, parent->kstack, SCHED_STACK_SIZE);
-    memcpy(child->ustack, parent->ustack, SCHED_STACK_SIZE);
+    memcpy(child->kstack, parent->kstack, PROC_STACK_SIZE);
+    memcpy(child->ustack, parent->ustack, PROC_STACK_SIZE);
     uintptr_t sp, fp;
     asm volatile(
         "mov %0, sp     \n" 

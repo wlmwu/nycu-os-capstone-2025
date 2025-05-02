@@ -1,6 +1,8 @@
 #ifndef EXCEOTION_H_
 #define EXCEOTION_H_
 
+#define EXCEPT_CLASS(esr) (esr >> 26)	// Extract exception class
+#define EC_SVC 0x15						// SVC from AArch64
 typedef struct trapframe {  // The layout here should be aligned with save_all/load_all in entry.S
 	unsigned long x[30];        // x0-x29
 	unsigned long lr;           // lr (x30)

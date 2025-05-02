@@ -1,6 +1,7 @@
 #include "buddy.h"
 #include "list.h"
 #include "utils.h"
+#include "mmu.h"
 #include <stdint.h>
 #include <stddef.h>
 
@@ -37,10 +38,10 @@ static int is_reserved(unsigned long pfn) {
 }
 
 static void *pfn_to_addr(unsigned long pfn) {
-    return (void*)((pfn * PAGE_SIZE) + MEM_START);
+    return (void*)PA_TO_VA((pfn * PAGE_SIZE) + MEM_START);
 }
 static unsigned long addr_to_pfn(void *addr) {
-    return ((uintptr_t)addr - MEM_START) / PAGE_SIZE;
+    return ((uintptr_t)VA_TO_PA(addr) - MEM_START) / PAGE_SIZE;
 }
 
 static void mask_set_free(int order, unsigned long pfn) {
@@ -159,11 +160,11 @@ void *page_alloc(int order) {
     
     // uart_printf("\033[0;33m[Page]\tAllocate %p at order %d, page %d. Next address at order %u: %p\033[0m\n", block, current_order, block_pfn, current_order, free_lists[current_order].next);
 
-    return block;
+    return (void*)VA_TO_PA(block);
 }
 
 void page_free(void *addr) {    
-    unsigned long block_pfn = addr_to_pfn(addr);
+    unsigned long block_pfn = addr_to_pfn((void*)PA_TO_VA(addr));
     int order = pfn_order[block_pfn];
     
     if (mask_is_free(order, block_pfn)) {
