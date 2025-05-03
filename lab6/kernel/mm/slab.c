@@ -55,7 +55,8 @@ void *kmalloc(size_t size) {
     if (list_empty(&pools[pool_idx])) {
         void *page = page_alloc(0);
         if (!page) return NULL;
-
+        page = (void*)PA_TO_VA(page);
+        
         slab_header_t *slab_header = page;
         slab_header->chunk_size =  MAX_CHUNK_SIZE >> (NUM_POOLS - pool_idx - 1);
         INIT_LIST_HEAD(&slab_header->free_list);
@@ -82,16 +83,15 @@ void *kmalloc(size_t size) {
 
     // uart_printf("\033[0;33m[Chunk]\tAllocate %p at chunk size %u\033[0m\n", chunk, slab_header->chunk_size);
 
-    return (void*)PA_TO_VA(chunk);
+    return chunk;
 }
 
 void kfree(void *ptr) {
-    ptr = (void*)VA_TO_PA(ptr);
-    if (!ptr) return;
+    if (!VA_TO_PA(ptr)) return;
 
     uintptr_t slab_start = ((uintptr_t)ptr) & ~(PAGE_SIZE - 1);      // Mask lower bits
     if (slab_start == ((uintptr_t)ptr)) {           // `ptr` is the start address of a page
-        page_free(ptr);
+        page_free((void*)VA_TO_PA(ptr));
         return;
     }
 
@@ -111,6 +111,6 @@ void kfree(void *ptr) {
         list_add_tail(&slab_header->list, &pools[pool_idx]);
     } else if (slab_header->free_list_size == total_chunks) {
         list_del(&slab_header->list);
-        page_free(slab_header);
+        page_free((void*)VA_TO_PA(slab_header));
     }
 }

@@ -9,6 +9,8 @@
 #include "mailbox.h"
 #include "irq.h"
 #include "proc.h"
+#include "mmu.h"
+#include "vm.h"
 
 static int sys_getpid(trapframe_t *tf) {
     sched_task_t *curr = sched_get_current();
@@ -38,41 +40,32 @@ static int sys_write(trapframe_t *tf) {
 
 static int sys_exec(trapframe_t *tf) {
     char *filename = (char*)(tf->x[0]);
-    cpio_newc_header_t *hptr = cpio_get_file_by_name(filename);
-    if (!hptr) {
-        uart_printf("%s: No such file or directory\n", filename);
-        return -1;
-    }
-
-    char *filedata;
-    uint32_t filesize = 0;
-    cpio_get_file(hptr, NULL, &filesize, &filedata);
-    
-    void *prog = kmalloc(filesize);
-    memcpy(prog, filedata, filesize);
+    void *prog = NULL;
+    size_t progsize = 0;
+    proc_load_prog(filename, &prog, &progsize);
 
     sched_task_t *curr = sched_get_current();
-    curr->size = filesize;
+    curr->size = progsize;
+    vm_map_pages(curr, PROC_ENTRY_POINT, VA_TO_PA(prog), progsize, 0);
     // kfree(curr->fn);                            // Child may use the same memory for the program.
     memset(curr->sighandlers, 0, sizeof(curr->sighandlers));
 
     curr->fn = prog;
-    tf->sp = (uintptr_t)curr->ustack + PROC_STACK_SIZE;
-    tf->elr = (uintptr_t)curr->fn;
+    tf->sp = PROC_USTACK_BASE + PROC_STACK_SIZE;
+    tf->elr = PROC_ENTRY_POINT;
+    
     return tf->x[0];
 }
 
 static int sys_fork(trapframe_t *tf) {
     irq_disable();
     sched_task_t *parent = sched_get_current();
-    sched_task_t *child = kthread_run(parent->fn, parent->args);
-    child->size = parent->size;
-
+    sched_task_t *child = proc_create(parent->fn, parent->args, parent->size);
     memcpy(child->sighandlers, parent->sighandlers, sizeof(parent->sighandlers));
     child->sigpending = parent->sigpending;
 
     int32_t kstack_offset = (int32_t)child->kstack - (int32_t)parent->kstack;
-    int32_t ustack_offset = (int32_t)child->ustack - (int32_t)parent->ustack;
+    // int32_t ustack_offset = (int32_t)child->ustack - (int32_t)parent->ustack;
     memcpy(child->kstack, parent->kstack, PROC_STACK_SIZE);
     memcpy(child->ustack, parent->ustack, PROC_STACK_SIZE);
     uintptr_t sp, fp;
@@ -84,8 +77,8 @@ static int sys_fork(trapframe_t *tf) {
     );
 
     child->context = parent->context;
-    child->context.fp = (uintptr_t)((int32_t)fp + kstack_offset);  
-    child->context.sp = (uintptr_t)((int32_t)sp + kstack_offset);
+    child->context.fp = PA_TO_VA((int32_t)fp + kstack_offset);  
+    child->context.sp = PA_TO_VA((int32_t)sp + kstack_offset);
     *(uintptr_t*)child->context.fp += kstack_offset;        // Adjust `fp` to child's stack copy
 
 childret:
@@ -96,7 +89,7 @@ childret:
         return (uintptr_t)child;
     } else {
         tf = (trapframe_t*)((char*)tf + kstack_offset);
-        tf->sp = (int32_t)tf->sp + ustack_offset;
+        // tf->sp = (int32_t)tf->sp + ustack_offset;
         tf->x[0] = 0;
         return 0;       // Return to the parent's trapframe, since `syscall_handle` was called with the parent's trapframe as an argument
     }
@@ -110,13 +103,23 @@ static int sys_exit(trapframe_t *tf) {
 static int sys_mboxcall(trapframe_t *tf) {
     unsigned char channel = tf->x[0];
     unsigned int *mbox = (unsigned int*)(tf->x[1]);
-    return mbox_call(mbox, channel);
+    unsigned int bufsize = mbox[0];
+    unsigned int  __attribute__((aligned(16))) buf[bufsize / sizeof(mbox[0])]; 
+    
+    memcpy(buf, mbox, bufsize);
+    int retval = mbox_call(buf, channel);
+    memcpy(mbox, buf, bufsize);
+
+    return retval;
 }
 
 static int sys_kill(trapframe_t *tf) {
-    int pid = tf->x[0];
+    uint32_t pid = tf->x[0];
     sched_task_t *thrd = sched_get_task(pid);
-    if (!thrd) return -1;
+    if (!thrd) {
+        uart_printf("kill: (%u) - No such process\n", pid);
+        return -1;
+    }
     thrd->state = kThDead;
     return 0;
 }

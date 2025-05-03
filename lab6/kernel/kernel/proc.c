@@ -10,6 +10,10 @@
 #include "irq.h"
 #include <stdint.h>
 
+// Attributes used in video player
+#define FRAMEBUF_PTR    0x3c100000      // FrameBufferInfo.pointer
+#define FRAMEBUF_SIZE   0x300000        // FrameBufferInfo.size
+
 int proc_load_prog(char *filename, void **prog, size_t *progsize) {
     if (!filename || !prog || !progsize) {
         uart_printf("Error: Arguments should not be NULL\n");
@@ -33,9 +37,11 @@ int proc_load_prog(char *filename, void **prog, size_t *progsize) {
 
 sched_task_t* proc_create(void *prog, void *args, size_t progsize) {
     sched_task_t *thrd = kthread_create(prog, args);
+    thrd->size = progsize;
 
     vm_map_pages(thrd, PROC_ENTRY_POINT, VA_TO_PA(prog), progsize, 0);
     vm_map_pages(thrd, PROC_USTACK_BASE, VA_TO_PA(thrd->ustack), PROC_STACK_SIZE, 0);
+    vm_map_pages(thrd, FRAMEBUF_PTR, FRAMEBUF_PTR, FRAMEBUF_SIZE, 0);
     
     sched_enqueue_task(thrd);
     return thrd;

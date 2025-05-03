@@ -15,7 +15,9 @@ void el1t_64_fiq_handler(void *regs) {}
 void el1t_64_error_handler(void *regs) {}
 
 void el1h_64_sync_handler(void *regs) {
-    uart_dbg_printf("el1h_64_sync_handler ");
+    uint64_t esr;
+    __asm__ volatile("mrs %0, esr_el1": "=r" (esr));
+    uart_dbg_printf("\033[0;31mEL1h: Unhandled exceptioin class %x, ESR_EL1: %x, Thread: %p\033[0m\t", EXCEPT_CLASS(esr), esr, sched_get_current());
 }
 void el1h_64_irq_handler(trapframe_t *tf) {
     irq_handle();
