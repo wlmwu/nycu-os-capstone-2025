@@ -3,7 +3,14 @@
 
 #include "sched.h"
 #include "mmu.h"
+#include "list.h"
 #include <stdint.h>
+
+typedef struct vm_area {
+    uint64_t start;             // VM Area: [start, end)
+    uint64_t end;
+    struct list_head list;      // List node to link all VMAs
+} vm_area_t;
 
 /**
  * Extracts the page table index at `level` from the virtual address `va`.
@@ -31,5 +38,19 @@
  * @param flag Flags to be set in all the created page table entries.
  */
 void vm_map_pages(sched_task_t *thrd, uint64_t va_start, uint64_t pa_start, size_t size, uint64_t flag);
+
+// https://github.com/torvalds/linux/blob/master/include/uapi/asm-generic/mman-common.h
+
+// MMAP Flags
+#define MAP_ANONYMOUS	0x20
+#define MAP_POPULATE	0x008000
+
+// MMAP Protection Flags
+#define PROT_NONE       0x0
+#define PROT_READ       0x1
+#define PROT_WRITE      0x2
+#define PROT_EXEC       0x4
+
+void *vm_mmap(sched_task_t *thrd, uint64_t addr, size_t len, int prot, int flags, int fd, int file_offset);
 
 #endif // VM_H_

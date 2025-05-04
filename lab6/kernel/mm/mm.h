@@ -1,5 +1,5 @@
-#ifndef MEMORY_H_
-#define MEMORY_H_
+#ifndef MM_H_
+#define MM_H_
 
 #include "buddy.h"
 #include "slab.h"
@@ -8,7 +8,7 @@
 #define SPIN_TABLE_START 0x0000
 #define SPIN_TABLE_END 0x1000
 
-#define PAGE_TABLE_START 0x1000
+#define PAGE_TABLE_START PGTABLE_START_ADDR
 #define PAGE_TABLE_END (PAGE_TABLE_START + (3 * PAGE_SIZE))
 
 extern unsigned long _start;
@@ -53,4 +53,4 @@ static inline void mm_init() {
     slab_init();
 }
 
-#endif // MEMORY_H_
+#endif // MM_H_

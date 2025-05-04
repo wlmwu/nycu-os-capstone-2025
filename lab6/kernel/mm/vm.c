@@ -2,6 +2,42 @@
 #include "utils.h"
 #include "buddy.h"
 #include "mini_uart.h"
+#include "proc.h"
+#include "slab.h"
+#include <stdbool.h>
+
+static vm_area_t* vma_add(sched_task_t *thrd, uint64_t start, uint64_t end) {
+    vm_area_t *vma = kmalloc(sizeof(vm_area_t));
+    vma->start = start;
+    vma->end = end;
+    list_add_tail(&vma->list, &thrd->vm_area_queue);
+
+    return vma;
+}
+
+static bool vma_is_free(sched_task_t *task, uint64_t start, uint64_t end) {
+    vm_area_t *vma, *tmp;
+    list_for_each_entry_safe(vma, tmp, &task->vm_area_queue, list) {
+        if (!(start >= vma->end || end <= vma->start)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+static uint64_t vma_find_free(sched_task_t *task, uint64_t hint, size_t len) {
+    if (hint && vma_is_free(task, hint, hint + len)) {     // Hint is specified and hint is available
+        return hint;
+    }
+
+    for (uint64_t base = ALIGN(PROC_ENTRY_POINT + task->size, PAGE_SIZE); base + len < PROC_USTACK_BASE; base += len) {     // Search an address between program and ustack 
+        if (vma_is_free(task, base, base + len)) {
+            return base;
+        }
+    }
+
+    return 0;
+}
 
 static void map_page(sched_task_t *thrd, uint64_t va, uint64_t page, uint64_t flag) {
     if (!thrd->pgd) {
@@ -20,15 +56,38 @@ static void map_page(sched_task_t *thrd, uint64_t va, uint64_t page, uint64_t fl
     }
 
     uint64_t idx = PAGE_IDX(3, va);                 // PTE(3)
-    table[idx] = page | PD_AF | PD_AP_USER | PD_MAIR_NORMAL_NOCACHE | PD_TYPE_PAGE| flag;
+    table[idx] = page | PD_AF | PD_MAIR_NORMAL_NOCACHE | PD_TYPE_PAGE | flag;
 }
 
 void vm_map_pages(sched_task_t *thrd, uint64_t va_start, uint64_t pa_start, size_t size, uint64_t flag) {
-    int64_t sz = size;
-    while (sz > 0) {
-        map_page(thrd, va_start, pa_start, flag);
-        va_start += PAGE_SIZE;
-        pa_start += PAGE_SIZE;
-        sz -= PAGE_SIZE;
+    uint64_t len = ALIGN(size, PAGE_SIZE);
+    for (uint64_t offset = 0; offset < len; offset += PAGE_SIZE) {
+        map_page(thrd, va_start + offset, pa_start + offset, flag);
     }
+    vma_add(thrd, va_start, va_start + len);
+}
+
+void *vm_mmap(sched_task_t *thrd, uint64_t addr, size_t len, int prot, int flags, int fd, int file_offset) {
+    if (!(flags & MAP_ANONYMOUS)) return (void*)-1;      // Validate flags (only MAP_ANONYMOUS supported)
+    else if (len <= 0) return (void*)-1;
+
+    len = ALIGN(len, PAGE_SIZE);                  // Ceiling alignment
+   
+    uint64_t va = addr;
+    uint64_t hint = va & ~(PAGE_SIZE - 1);        // Flooring alignment
+
+    va = vma_find_free(thrd, hint, len);
+    if (!va) return (void*)-1;
+
+    // if (flags & MAP_POPULATE) {      // Without page fault handler, always use MAP_POPULATE
+    uint64_t pte_flags = 0;
+    if ((prot & PROT_READ) && (prot & PROT_WRITE)) pte_flags |= PD_AP_RW_EL0;
+    else if (prot & PROT_READ) pte_flags |= PD_AP_RO_EL0;
+    if (!(prot & PROT_EXEC)) pte_flags |= PD_UXN;
+
+    void *block = kmalloc(len);
+    vm_map_pages(thrd, va, VA_TO_PA(block), len, PD_AP_RW_EL0);
+    // }
+
+    return (void*)va;
 }

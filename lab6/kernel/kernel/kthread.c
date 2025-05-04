@@ -55,6 +55,8 @@ sched_task_t* kthread_create(sched_fn_t fn, void *args) {
     memset(thrd->sighandlers, 0, sizeof(thrd->sighandlers));
     thrd->sigpending = 0ULL;
     thrd->sigcontext = NULL;
+
+    INIT_LIST_HEAD(&thrd->vm_area_queue);
     
     return thrd;
 }

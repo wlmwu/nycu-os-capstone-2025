@@ -157,6 +157,18 @@ static int sys_sigreturn(trapframe_t *tf) {
     return 0;
 }
 
+static int sys_mmap(trapframe_t *tf) {
+    sched_task_t *curr = sched_get_current();
+    uint64_t addr = tf->x[0];
+    size_t len = tf->x[1];
+    int prot = tf->x[2];
+    int flags = tf->x[3];
+    int fd = tf->x[4];
+    int file_offset = tf->x[5];
+
+    return (int)vm_mmap(curr, addr, len, prot, flags, fd, file_offset);
+}
+
 static int (*syscalls[])(trapframe_t *tf) = {
     [SYS_GETPID]    sys_getpid,
     [SYS_READ]      sys_read,
@@ -170,6 +182,7 @@ static int (*syscalls[])(trapframe_t *tf) = {
     [SYS_SIGNAL]    sys_signal,
     [SYS_SIGKILL]   sys_sigkill,
     [SYS_SIGRETURN] sys_sigreturn,
+    [SYS_MMAP]      sys_mmap,
 };
 
 void syscall_handle(trapframe_t *tf) {

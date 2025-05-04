@@ -39,9 +39,9 @@ sched_task_t* proc_create(void *prog, void *args, size_t progsize) {
     sched_task_t *thrd = kthread_create(prog, args);
     thrd->size = progsize;
 
-    vm_map_pages(thrd, PROC_ENTRY_POINT, VA_TO_PA(prog), progsize, 0);
-    vm_map_pages(thrd, PROC_USTACK_BASE, VA_TO_PA(thrd->ustack), PROC_STACK_SIZE, 0);
-    vm_map_pages(thrd, FRAMEBUF_PTR, FRAMEBUF_PTR, FRAMEBUF_SIZE, 0);
+    vm_map_pages(thrd, PROC_ENTRY_POINT, VA_TO_PA(prog), progsize, PD_AP_RW_EL0);
+    vm_map_pages(thrd, PROC_USTACK_BASE, VA_TO_PA(thrd->ustack), PROC_STACK_SIZE, PD_AP_RW_EL0);
+    vm_map_pages(thrd, FRAMEBUF_PTR, FRAMEBUF_PTR, FRAMEBUF_SIZE, PD_AP_RW_EL0);
     
     sched_enqueue_task(thrd);
     return thrd;

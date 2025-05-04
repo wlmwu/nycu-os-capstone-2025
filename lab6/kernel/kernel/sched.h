@@ -37,7 +37,8 @@ typedef struct sched_task {
     uint64_t sigpending;					// Bitmask of pending signals for the task
     trapframe_t *sigcontext;				// Saved context before signal handler execution
     uint64_t pgd;                           // PGD (physical address) of the process
-	struct list_head list;					// List node for linking all tasks
+    struct list_head vm_area_queue;         // List head to link all `vm_area_t`s
+	struct list_head list;					// List node to link all tasks
 } sched_task_t;
 
 void schedule();

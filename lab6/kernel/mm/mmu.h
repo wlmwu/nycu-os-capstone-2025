@@ -20,11 +20,14 @@
 
 #define PD_MAIR_DEVICE_nGnRnE       (MAIR_IDX_DEVICE_nGnRnE << 2)       // MAIR index ([4:2])
 #define PD_MAIR_NORMAL_NOCACHE      (MAIR_IDX_NORMAL_NOCACHE << 2)
-#define PD_TYPE_TABLE               0b11                               // Next level ([1:0])
+#define PD_TYPE_TABLE               0b11                                // Next level ([1:0])
 #define PD_TYPE_BLOCK               0b01
 #define PD_TYPE_PAGE                0b11
 #define PD_AF                       (1 << 10)                           // Access flag ([10])
-#define PD_AP_USER                  (0b01 << 6)                         // Access permission ([7:6])
+#define PD_AP_RW_EL0                (0b01 << 6)                         // Access permission ([7:6]) (ARMv8-A Address Translation, page 22)
+#define PD_AP_RO_EL0                (0b11 << 6)
+#define PD_AP_NONE_EL0              (0b00 << 6)
+#define PD_UXN                      (1ULL << 54)                        // Unprivileged (EL0) Execute Never
 
 #ifndef __ASSEMBLER__
 
