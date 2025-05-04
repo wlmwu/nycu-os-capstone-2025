@@ -38,11 +38,11 @@ int proc_load_prog(char *filename, void **prog, size_t *progsize) {
 sched_task_t* proc_create(void *prog, void *args, size_t progsize) {
     sched_task_t *thrd = kthread_create(prog, args);
     thrd->size = progsize;
-
-    vm_map_pages(thrd, PROC_ENTRY_POINT, VA_TO_PA(prog), progsize, PD_AP_RW_EL0);
-    vm_map_pages(thrd, PROC_USTACK_BASE, VA_TO_PA(thrd->ustack), PROC_STACK_SIZE, PD_AP_RW_EL0);
-    vm_map_pages(thrd, FRAMEBUF_PTR, FRAMEBUF_PTR, FRAMEBUF_SIZE, PD_AP_RW_EL0);
     
+    vma_add(thrd, PROC_ENTRY_POINT, PROC_ENTRY_POINT + progsize,        PROT_READ | PROT_WRITE | PROT_EXEC, VA_TO_PA(prog));
+    vma_add(thrd, PROC_USTACK_BASE, PROC_USTACK_BASE + PROC_STACK_SIZE, PROT_READ | PROT_WRITE | PROT_EXEC, 0);
+    vma_add(thrd, FRAMEBUF_PTR,     FRAMEBUF_PTR + FRAMEBUF_SIZE,       PROT_READ | PROT_WRITE | PROT_EXEC, FRAMEBUF_PTR);
+
     sched_enqueue_task(thrd);
     return thrd;
 }

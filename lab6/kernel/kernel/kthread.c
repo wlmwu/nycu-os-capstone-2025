@@ -56,6 +56,9 @@ sched_task_t* kthread_create(sched_fn_t fn, void *args) {
     thrd->sigpending = 0ULL;
     thrd->sigcontext = NULL;
 
+    thrd->pgd = VA_TO_PA(kmalloc(PAGE_SIZE));
+    memset((void*)PA_TO_VA(thrd->pgd), 0, PAGE_SIZE);
+
     INIT_LIST_HEAD(&thrd->vm_area_queue);
     
     return thrd;

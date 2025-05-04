@@ -46,7 +46,7 @@ static int sys_exec(trapframe_t *tf) {
 
     sched_task_t *curr = sched_get_current();
     curr->size = progsize;
-    vm_map_pages(curr, PROC_ENTRY_POINT, VA_TO_PA(prog), progsize, 0);
+    vma_add(curr, PROC_ENTRY_POINT, PROC_ENTRY_POINT + progsize, PROT_READ | PROT_WRITE | PROT_EXEC, VA_TO_PA(prog));
     // kfree(curr->fn);                            // Child may use the same memory for the program.
     memset(curr->sighandlers, 0, sizeof(curr->sighandlers));
 
@@ -185,7 +185,7 @@ static int (*syscalls[])(trapframe_t *tf) = {
     [SYS_MMAP]      sys_mmap,
 };
 
-void syscall_handle(trapframe_t *tf) {
+int syscall_handle(trapframe_t *tf) {
     sched_task_t *current = sched_get_current();
     int sysnum = tf->x[8];
 
@@ -196,6 +196,7 @@ void syscall_handle(trapframe_t *tf) {
     } else {
         uart_dbg_printf("\033[0;31mError: Unknown syscall %x\033[0m\n");
         tf->x[0] = -1;
-        sys_exit(tf);
+        return -1;
     }
+    return 0;
 }
