@@ -10,13 +10,17 @@
 #define MAIR_IDX_DEVICE_nGnRnE      0
 #define MAIR_IDX_NORMAL_NOCACHE     1
 
-#define PAGE_SHIFT                  12                                  // # of bits per page (4KB)
-#define TABLE_SHIFT                 9                                   // # of bits per table index 
-#define SECTION_SHIFT               (PAGE_SHIFT + TABLE_SHIFT)          // # of bits per section (i.e., # bits of PTE + # bits of page) (2MB)
+#define PAGE_SHIFT                  12                                  // Number of bits per page (4KB)
+#define TABLE_SHIFT                 9                                   // Number of bits per table index 
+#define SECTION_SHIFT               (PAGE_SHIFT + TABLE_SHIFT)          // Number of bits per section (i.e., # bits of PTE + # bits of page) (2MB)
 
-#define PAGE_SIZE                   (1 << PAGE_SHIFT)
+#define PAGE_SIZE                   (1 << PAGE_SHIFT)                   // Size of a page in bytes
+#define TABLE_SIZE                  (1 << TABLE_SHIFT)                  // Number of entries per table
+#define SECTION_SIZE                (1 << SECTION_SHIFT)                // Size of a section in bytes
+
+#define PAGE_MASK                   (((1ULL << (TABLE_SHIFT * 4 + PAGE_SHIFT)) - 1) & ~(PAGE_SIZE - 1))       // Extract a page ([47:12]) from a table entry 
+
 #define PGTABLE_START_ADDR          0x1000
-#define SECTION_SIZE                (1 << SECTION_SHIFT)
 
 #define PD_MAIR_DEVICE_nGnRnE       (MAIR_IDX_DEVICE_nGnRnE << 2)       // MAIR index ([4:2])
 #define PD_MAIR_NORMAL_NOCACHE      (MAIR_IDX_NORMAL_NOCACHE << 2)

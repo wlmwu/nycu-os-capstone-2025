@@ -149,6 +149,19 @@ void *memcpy(void *dest, const void *src, size_t n);
 
 uint32_t bswap32(uint32_t value);
 
+// https://github.com/torvalds/linux/blob/master/arch/arm64/include/asm/sysreg.h#L1133
+#define READ_SYSREG(r) ({					       \
+	uint64_t __val;						           \
+	asm volatile("mrs %0, " #r : "=r" (__val));	   \
+	__val;							               \
+})
+
+#define WRITE_SYSREG(v, r) do {					   \
+	uint64_t __val = (uint64_t)(v);				   \
+	asm volatile("msr " #r ", %x0"		           \
+		     : : "rZ" (__val));				       \
+} while (0)
+
 /* Reboot */
 #define PM_PASSWORD 0x5a000000
 #define PM_RSTC 0x3F10001c

@@ -6,13 +6,18 @@
 #define EC_SVC_64 					0x15			// SVC from AArch64
 #define EC_INSTR_ABORT_LOWER_EL   	0x20			// Instruction Abort from a lower Exception level
 #define EC_DATA_ABORT_LOWER_EL   	0x24			// Data Abort from a lower Exception level
+#define EC_DATA_ABORT_SAME_EL   	0x25			// Data Abort from the same Exception level
 
-#define ABORT_ISS_TRANS_FAULT_L0   	0b000100  		// Translation fault from a Data/Instruction Abort exception, level 0
-#define ABORT_ISS_TRANS_FAULT_L1   	0b000101  		// Translation fault from a Data/Instruction Abort exception, level 1
-#define ABORT_ISS_TRANS_FAULT_L2   	0b000110  		// Translation fault from a Data/Instruction Abort exception, level 2
-#define ABORT_ISS_TRANS_FAULT_L3   	0b000111  		// Translation fault from a Data/Instruction Abort exception, level 3
+#define ABORT_ISS_FSC_TRANS_L0   	0b000100  		// Translation fault from a Data/Instruction Abort exception, level 0
+#define ABORT_ISS_FSC_TRANS_L1   	0b000101  		// Translation fault from a Data/Instruction Abort exception, level 1
+#define ABORT_ISS_FSC_TRANS_L2   	0b000110  		// Translation fault from a Data/Instruction Abort exception, level 2
+#define ABORT_ISS_FSC_TRANS_L3   	0b000111  		// Translation fault from a Data/Instruction Abort exception, level 3
 
-#define FSC(iss)					(iss & 0x3f)	// Exract FSC (Both Data and Instruction) from ISS
+#define ABORT_ISS_WNR_READ			0b0				// Fault caused by an instruction reading
+#define ABORT_ISS_WNR_WRITE			0b1				// Fault caused by an instruction writing
+
+#define FSC(iss)					((iss & 0x3f) >> 0)		// Exract FSC (Both Data and Instruction) from ISS
+#define WNR(iss)					((iss & 0x40) >> 6)		// Exract WnR from Data Abort ISS
 
 typedef union {
 	uint64_t value;

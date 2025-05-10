@@ -53,6 +53,10 @@ void vm_map_pages(sched_task_t *thrd, uint64_t va_start, uint64_t pa_start, size
 void *vm_mmap(sched_task_t *thrd, uint64_t addr, size_t len, int prot, int flags, int fd, int file_offset);
 
 vm_area_t* vma_add(sched_task_t *thrd, uint64_t start, uint64_t end, uint64_t prot, uint64_t file);
+void vma_free(sched_task_t *thrd);
+
 int vm_fault_handle(uint64_t va, esr_el1_t esr);
+
+void vm_copy(sched_task_t *dst, sched_task_t *src);
 
 #endif // VM_H_

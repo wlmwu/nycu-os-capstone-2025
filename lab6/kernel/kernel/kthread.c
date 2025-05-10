@@ -41,13 +41,12 @@ sched_task_t* kthread_create(sched_fn_t fn, void *args) {
     memset(thrd, 0, sizeof(sched_task_t));
 
     thrd->state = kThRunnable;
-    thrd->ustack = kmalloc(PROC_STACK_SIZE);
     thrd->kstack = kmalloc(PROC_STACK_SIZE);
     thrd->fn = fn;
     thrd->args = args;
     INIT_LIST_HEAD(&thrd->list);
     
-    uint64_t *stack_top = thrd->ustack + PROC_STACK_SIZE;      // top: high addr, bottom: low addr
+    uint64_t *stack_top = thrd->kstack + PROC_STACK_SIZE;      // `kthread_fn_wrapper` needs a stack and `kstack` is unused at that time.
     thrd->context.pc = (unsigned long)kthread_fn_wrapper;
     thrd->context.sp = (unsigned long)stack_top;
     thrd->context.fp = (unsigned long)thrd->context.sp;

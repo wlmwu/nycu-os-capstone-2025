@@ -60,14 +60,17 @@ static int sys_exec(trapframe_t *tf) {
 static int sys_fork(trapframe_t *tf) {
     irq_disable();
     sched_task_t *parent = sched_get_current();
-    sched_task_t *child = proc_create(parent->fn, parent->args, parent->size);
+    sched_task_t *child = kthread_run(parent->fn, parent->args);
+    child->size = parent->size;
+    
     memcpy(child->sighandlers, parent->sighandlers, sizeof(parent->sighandlers));
     child->sigpending = parent->sigpending;
 
     int32_t kstack_offset = (int32_t)child->kstack - (int32_t)parent->kstack;
-    // int32_t ustack_offset = (int32_t)child->ustack - (int32_t)parent->ustack;
     memcpy(child->kstack, parent->kstack, PROC_STACK_SIZE);
-    memcpy(child->ustack, parent->ustack, PROC_STACK_SIZE);
+    vm_copy(child, parent);
+    vm_map_pages(child, PROC_FRAMEBUF_PTR, PROC_FRAMEBUF_PTR, PROC_FRAMEBUF_SIZE, PROT_READ | PROT_WRITE | PROT_EXEC);      // Require designated physical address mapping
+
     uintptr_t sp, fp;
     asm volatile(
         "mov %0, sp     \n" 
@@ -89,7 +92,6 @@ childret:
         return (uintptr_t)child;
     } else {
         tf = (trapframe_t*)((char*)tf + kstack_offset);
-        // tf->sp = (int32_t)tf->sp + ustack_offset;
         tf->x[0] = 0;
         return 0;       // Return to the parent's trapframe, since `syscall_handle` was called with the parent's trapframe as an argument
     }

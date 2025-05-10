@@ -62,9 +62,9 @@ void idle() {
             if (thrd->state == kThDead) {
                 list_del(&thrd->list);
                 // if (is_user_fn(thrd->fn)) kfree(thrd->fn);   // Parent might exit before children. However, they must use the same memory for the program.
-                kfree(thrd->ustack);
-                kfree(thrd->kstack);
-                kfree(thrd);
+                // kfree(thrd->ustack);
+                // kfree(thrd->kstack);
+                // kfree(thrd);
             }
         }
     }
