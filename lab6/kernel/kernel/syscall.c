@@ -45,12 +45,15 @@ static int sys_exec(trapframe_t *tf) {
     proc_load_prog(filename, &prog, &progsize);
 
     sched_task_t *curr = sched_get_current();
+    
+    curr->fn = prog;
     curr->size = progsize;
-    vma_add(curr, PROC_ENTRY_POINT, PROC_ENTRY_POINT + progsize, PROT_READ | PROT_WRITE | PROT_EXEC, VA_TO_PA(prog));
-    // kfree(curr->fn);                            // Child may use the same memory for the program.
+    
+    vm_release(curr);
+    proc_setup_vma(curr, prog, progsize);
+
     memset(curr->sighandlers, 0, sizeof(curr->sighandlers));
 
-    curr->fn = prog;
     tf->sp = PROC_USTACK_BASE + PROC_STACK_SIZE;
     tf->elr = PROC_ENTRY_POINT;
     
@@ -106,7 +109,7 @@ static int sys_mboxcall(trapframe_t *tf) {
     unsigned char channel = tf->x[0];
     unsigned int *mbox = (unsigned int*)(tf->x[1]);
     unsigned int bufsize = mbox[0];
-    unsigned int  __attribute__((aligned(16))) buf[bufsize / sizeof(mbox[0])]; 
+    unsigned int __attribute__((aligned(16))) buf[bufsize / sizeof(mbox[0])]; 
     
     memcpy(buf, mbox, bufsize);
     int retval = mbox_call(buf, channel);

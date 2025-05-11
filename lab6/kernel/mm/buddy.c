@@ -19,6 +19,8 @@ static unsigned char pfn_order[MAX_PAGES];     // Map PFN to order
 
 static unsigned char reserved_bitmap[(MAX_PAGES + 7) / 8 * 8];
 
+static uint32_t page_refcounts[MAX_PAGES];
+
 void buddy_reserve(uintptr_t start, uintptr_t end) {
     if (end < MEM_START || start > MEM_END) return;
     start = MAX(start, MEM_START);
@@ -158,6 +160,8 @@ void *page_alloc(int order) {
     free_remove(current_order, block_pfn);
     pfn_order[block_pfn] = current_order;
     
+    page_refcounts[block_pfn] = 1;
+
     // uart_printf("\033[0;33m[Page]\tAllocate %p at order %d, page %d. Next address at order %u: %p\033[0m\n", block, current_order, block_pfn, current_order, free_lists[current_order].next);
 
     return (void*)VA_TO_PA(block);
@@ -165,12 +169,13 @@ void *page_alloc(int order) {
 
 void page_free(void *addr) {    
     unsigned long block_pfn = addr_to_pfn((void*)PA_TO_VA(addr));
+    if (block_pfn <  0 && block_pfn >= MAX_PAGES) return;
+
     int order = pfn_order[block_pfn];
+    if (mask_is_free(order, block_pfn)) return;
     
-    if (mask_is_free(order, block_pfn)) {
-        return;
-    }
-    
+    page_refcounts[block_pfn] = 0;
+
     for ( ; order < MAX_ORDER - 1; ++order) {
         unsigned long buddy_pfn = BUDDY(block_pfn, order);
         if (IS_BLOCK_INVALID(buddy_pfn, order) || !mask_is_free(order, buddy_pfn)) {
@@ -185,4 +190,22 @@ void page_free(void *addr) {
     
     // uart_printf("\033[0;33m[Page]\tFree %p and add back to order %d, page %d. Next address at order %u: %p\033[0m\n", addr, order, block_pfn, order, free_lists[order].next);
 
+}
+
+uint32_t page_refcount_update(uint64_t pa, int8_t increment) {
+    uint64_t va = PA_TO_VA(pa);
+    unsigned long block_pfn = addr_to_pfn((void*)va);
+    if (block_pfn <  0 && block_pfn >= MAX_PAGES) return -1;
+    int order = pfn_order[block_pfn];
+    if (mask_is_free(order, block_pfn)) return -1;
+
+    if (increment > 0) {
+        ++page_refcounts[block_pfn];
+    } else if (increment < 0) {
+        --page_refcounts[block_pfn];      
+        if (page_refcounts[block_pfn] == 0) {
+            page_free((void*)pa);
+        }
+    }
+    return page_refcounts[block_pfn];
 }

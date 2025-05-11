@@ -1,9 +1,9 @@
 #ifndef MMU_H_
 #define MMU_H_
 
-#define TCR_CONFIG_REGION_48bit     (((64 - 48) << 0) | ((64 - 48) << 16))
-#define TCR_CONFIG_4KB              ((0b00 << 14) |  (0b10 << 30))
-#define TCR_CONFIG_DEFAULT          (TCR_CONFIG_REGION_48bit | TCR_CONFIG_4KB)
+#define TCR_CONFIG_REGION_TSZ       (((64 - 48) << 0) | ((64 - 48) << 16))      // T0SZ, T1SZ:  ttbr size
+#define TCR_CONFIG_4KB              ((0b00 << 14) |  (0b10 << 30))              // TG0,  TG1:   ttbr granule size
+#define TCR_CONFIG_DEFAULT          (TCR_CONFIG_REGION_TSZ | TCR_CONFIG_4KB)
 
 #define MAIR_DEVICE_nGnRnE          0b00000000
 #define MAIR_NORMAL_NOCACHE         0b01000100
@@ -43,15 +43,26 @@
 
 void mmu_init();
 
+static inline void tlb_flush_all() {
+    asm volatile ("tlbi vmalle1is" ::: "memory");       // Invalidate all TLB entries
+    asm volatile ("dsb  ish      " ::: "memory");       // Ensure the completion of TLB invalidatation
+    asm volatile ("isb           " ::: "memory");       // Ensure that the processor fetches new instructions
+}
+
+static inline void tlb_flush_page(uint64_t va) {
+    asm volatile ("dsb  ishst      " ::: "memory");                 // The barrier only waits for store ("st")
+    asm volatile ("tlbi	vale1is, %0" ::  "r" (VA_TO_PA(va)));       // Invalidate all TLB entries
+    asm volatile ("dsb  ish        " ::: "memory");                 // Ensure the completion of TLB invalidatation
+    asm volatile ("isb             " ::: "memory");                 // Ensure that the processor fetches new instructions
+}
+
 static inline void mmu_switch_to(uint64_t pgd) {
     asm volatile (
         "dsb    ish             \n"     // Ensure write has completed
         "msr    ttbr0_el1, %0   \n"     // Switch translation based address.
-        "tlbi   vmalle1is       \n"     // Invalidate all TLB entries
-        "dsb    ish             \n"     // Ensure completion of TLB invalidatation
-        "isb                    \n"
-        :: "r"(pgd)
+        :: "r" (pgd)
     );
+    tlb_flush_all();
 }
 
 #endif //__ASSEMBLER__

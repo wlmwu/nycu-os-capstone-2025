@@ -28,7 +28,6 @@ typedef void (*sched_fn_t)(void *args);
 typedef struct sched_task {
     struct sched_context context;			// Saved CPU context for context switch
     enum { kThRunnable, kThDead } state;	// Current state
-    void *ustack;                           // User stack bottom
     void *kstack;                           // Kernel stack bottom
     sched_fn_t fn;							// Entry point address of the user program
     void *args;								// Argument passed to the user program's entry point (fn)

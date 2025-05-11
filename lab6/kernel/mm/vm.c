@@ -4,6 +4,7 @@
 #include "mini_uart.h"
 #include "proc.h"
 #include "slab.h"
+#include "list.h"
 #include <stdbool.h>
 
 vm_area_t* vma_add(sched_task_t *thrd, uint64_t start, uint64_t end, uint64_t prot, uint64_t file) {
@@ -15,10 +16,6 @@ vm_area_t* vma_add(sched_task_t *thrd, uint64_t start, uint64_t end, uint64_t pr
     list_add_tail(&vma->list, &thrd->vm_area_queue);
 
     return vma;
-}
-
-void vma_free(sched_task_t *thrd) {
-    // implement later
 }
 
 static vm_area_t* vma_get(sched_task_t *thrd, uint64_t va) {
@@ -146,12 +143,18 @@ int vm_fault_handle(uint64_t va, esr_el1_t esr) {
         if (vma && vma->prot & PROT_WRITE) {
             uint64_t *entry = walk(curr, va);
             uint64_t old_page = *entry & PAGE_MASK;
-            uint64_t new_page = (uint64_t)page_alloc(0);
-            memcpy((void*)PA_TO_VA(new_page), (void*)PA_TO_VA(old_page), PAGE_SIZE);
+            if (page_refcount_update(old_page, 0) > 1) {
+                uint64_t new_page = (uint64_t)page_alloc(0);
+                memcpy((void*)PA_TO_VA(new_page), (void*)PA_TO_VA(old_page), PAGE_SIZE);
+                *entry &= ~PAGE_MASK;
+                *entry |= new_page;
+                page_refcount_update(old_page, -1);
+            }
             *entry &= ~PD_AP_RO_EL0;
             *entry |= PD_AP_RW_EL0;
-            *entry &= ~PAGE_MASK;
-            *entry |= new_page;
+
+            tlb_flush_page(va);
+
             uart_printf("Writing fault: %p\n", va);
             return 0;
         }
@@ -175,6 +178,7 @@ static void copy_tables(int pgidx, uint64_t dst_table, uint64_t src_table, uint6
                 ((uint64_t*)src_table)[pgidx] |= PD_AP_RO_EL0;
             }
             ((uint64_t*)dst_table)[pgidx] = ((uint64_t*)src_table)[pgidx];
+            page_refcount_update(((uint64_t*)dst_table)[pgidx] & PAGE_MASK, +1);
         }
     } else {                // PGD, PUD, PMD
         if (((uint64_t*)src_table)[pgidx] & PD_TYPE_TABLE) {
@@ -201,4 +205,38 @@ void vm_copy(sched_task_t *dst, sched_task_t *src) {
     for (int i = 0; i < TABLE_SIZE; ++i) {
         copy_tables(i, dst->pgd, src->pgd, 0);
     }
+}
+
+static void free_tables(uint64_t table, uint64_t level) {
+    if (!table) return;
+    
+    // Page frame
+    if (level == 4) {   
+        page_refcount_update(table, -1);
+        return;
+    }
+    
+    // PGD, PUD, PMD, PTE
+    for (int i = 0; i < TABLE_SIZE; ++i) {
+        uint64_t nxt_table = ((uint64_t*)PA_TO_VA(table))[i] & PAGE_MASK;
+        free_tables(nxt_table, level + 1);
+        ((uint64_t*)PA_TO_VA(table))[i] = 0ULL;
+    }
+    if (level != 0) {
+        page_refcount_update(table, -1);
+    }
+} 
+
+void vm_release(sched_task_t *thrd) {
+    // Free VMAs
+    while (thrd->vm_area_queue.next != &thrd->vm_area_queue) {
+        list_del(thrd->vm_area_queue.next);
+    }
+    INIT_LIST_HEAD(&thrd->vm_area_queue);
+
+    // Free page tables
+    free_tables(thrd->pgd, 0);
+
+    // Flush TLB
+    tlb_flush_all();
 }

@@ -61,10 +61,7 @@ void idle() {
         list_for_each_entry_safe(thrd, tmp, &sched_queue, list) {
             if (thrd->state == kThDead) {
                 list_del(&thrd->list);
-                // if (is_user_fn(thrd->fn)) kfree(thrd->fn);   // Parent might exit before children. However, they must use the same memory for the program.
-                // kfree(thrd->ustack);
-                // kfree(thrd->kstack);
-                // kfree(thrd);
+                proc_release(thrd);
             }
         }
     }

@@ -15,6 +15,10 @@
 #include <stdint.h>
 
 int proc_load_prog(char *filename, void **prog, size_t *progsize);
+
+void proc_setup_vma(sched_task_t *thrd, void *prog, size_t progsize);
+
 sched_task_t* proc_create(void *prog, void *args, size_t progsize);
+void proc_release(sched_task_t *thrd);
 
 #endif // PROC_H_

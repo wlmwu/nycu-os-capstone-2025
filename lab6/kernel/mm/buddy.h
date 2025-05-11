@@ -41,4 +41,22 @@ void buddy_init();
 void *page_alloc(int order);
 void page_free(void *addr);
 
+/**
+ * @brief Updates the reference count for the page associated with the given virtual address.
+ *
+ * This function adjusts the reference count of the provided physical address (`pa`).
+ * If decrementing the count results in a zero reference count, the associated page is 
+ * freed automatically.
+ *
+ * @param pa The physical address whose associated page reference count is to be updated.
+ * @param increment The value to add to the reference count. Typically, this should be
+ * 1 to increment the count, -1 to decrement it, or 0 to retrieve the current count 
+ * without modification.
+ * @return The updated reference count of the page on success. Returns -1 if `pa` is 
+ * not valid (cannot be translated to a valid PFN or the corresponding memory block is 
+ * marked as free).
+ * 
+ */
+uint32_t page_refcount_update(uint64_t pa, int8_t increment);
+
 #endif // BUDDY_H_
