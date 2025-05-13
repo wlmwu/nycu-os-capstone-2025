@@ -142,6 +142,7 @@ void command_exec(int argc, char **argv) {
         uart_puts("Usage: exec <program.img>\n");
         return;
     }
+    irq_disable();
     char *filename = argv[1];
     void *prog = NULL;
     size_t progsize = 0;
@@ -150,6 +151,7 @@ void command_exec(int argc, char **argv) {
     proc_create(prog, NULL, progsize);
 
     sched_start();     // Jump to thread queue
+    irq_enable();
 }
 
 static void echoat_timer_event(void *msg) {

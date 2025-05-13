@@ -135,6 +135,8 @@ int vm_fault_handle(uint64_t va, esr_el1_t esr) {
             uint64_t *entry = walk(curr, va_aligned);
             *entry = page | PD_AF | PD_MAIR_NORMAL_NOCACHE | PD_TYPE_PAGE | pte_flags;
 
+            tlb_flush_page(va);
+
             uart_printf("Translation fault: %p\n", va);
             return 0;
         }
@@ -153,7 +155,7 @@ int vm_fault_handle(uint64_t va, esr_el1_t esr) {
             *entry &= ~PD_AP_RO_EL0;
             *entry |= PD_AP_RW_EL0;
 
-            tlb_flush_page(va);
+            tlb_flush_all();
 
             uart_printf("Writing fault: %p\n", va);
             return 0;

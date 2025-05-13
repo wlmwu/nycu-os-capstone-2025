@@ -7,9 +7,9 @@
 #define PROC_USTACK_BASE    0xffffffffb000    
 #define PROC_ENTRY_POINT    0x0 
 
-// Attributes used in video player
+// Attributes used in video player, QEMU: 0x3Cxxxxxx, RPi: 0x3Exxxxxx 
 #define PROC_FRAMEBUF_PTR    0x3c100000      // FrameBufferInfo.pointer
-#define PROC_FRAMEBUF_SIZE   0x300000        // FrameBufferInfo.size
+#define PROC_FRAMEBUF_SIZE   0x3000000       // FrameBufferInfo.size
 
 #include "sched.h"
 #include <stdint.h>

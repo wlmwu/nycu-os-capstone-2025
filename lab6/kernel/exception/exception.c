@@ -16,7 +16,7 @@ void el1t_64_irq_handler(void *regs) {}
 void el1t_64_fiq_handler(void *regs) {}
 void el1t_64_error_handler(void *regs) {}
 
-void el1h_64_sync_handler(void *regs) {
+void el1h_64_sync_handler(trapframe_t *tf) {
     esr_el1_t esr;
     esr.value = READ_SYSREG(esr_el1);
 
@@ -29,6 +29,7 @@ void el1h_64_sync_handler(void *regs) {
     }
     
     if (retval < 0) sched_get_current()->sigpending |= SIGKILL;
+    signal_check(tf);
 }
 void el1h_64_irq_handler(trapframe_t *tf) {
     irq_handle();

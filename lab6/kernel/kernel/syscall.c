@@ -22,7 +22,7 @@ static int sys_read(trapframe_t *tf) {
     char *ptr = (char*)(tf->x[0]);
     size_t sz = tf->x[1];
     while (sz--) {
-        char c = uart_getc();
+        char c = uart_async_getc();
         *ptr++ = c;
     }
     return tf->x[1];
@@ -108,12 +108,19 @@ static int sys_exit(trapframe_t *tf) {
 static int sys_mboxcall(trapframe_t *tf) {
     unsigned char channel = tf->x[0];
     unsigned int *mbox = (unsigned int*)(tf->x[1]);
-    unsigned int bufsize = mbox[0];
-    unsigned int __attribute__((aligned(16))) buf[bufsize / sizeof(mbox[0])]; 
-    
-    memcpy(buf, mbox, bufsize);
-    int retval = mbox_call(buf, channel);
-    memcpy(mbox, buf, bufsize);
+
+    uint64_t par;
+    asm volatile (
+        "at     s1e0r, %[va]      \n"       // Stage 1 EL0 Read translation
+        "isb                      \n"       // Ensure par_el1 is updated
+        "mrs    %[par], par_el1   \n"
+        : [par] "=r" (par)
+        : [va] "r" (mbox)
+        : "memory"
+    );
+
+    uint64_t addr = (par & PAGE_MASK) | ((uint64_t)mbox & (PAGE_SIZE - 1));   // Extract physical address
+    int retval = mbox_call((void*)PA_TO_VA(addr), channel);
 
     return retval;
 }

@@ -38,11 +38,14 @@ void schedule() {
     }
 
     if (list_empty(&sched_queue)) {         // All threads have exited (except `idle()`), return to shell
-        shell_run();
+        kfree(next->kstack);                   // Free idle thread
+        kfree((void*)PA_TO_VA(next->pgd));
+        kfree(next);
+        next = &init;
     } else {
         list_add_tail(&next->list, &sched_queue);
-        context_switch(curr, next);
     }
+    context_switch(curr, next);
 }
 
 void sched_enqueue_task(sched_task_t *thread) {
@@ -55,7 +58,7 @@ static inline bool is_user_fn(void *fn) {
     return !((uintptr_t)fn >= (uintptr_t)(&_start) && (uintptr_t)fn <= (uintptr_t)(&_end));
 }  
 
-void idle() {
+static void idle() {
     while (1) {
         sched_task_t *thrd, *tmp;
         list_for_each_entry_safe(thrd, tmp, &sched_queue, list) {
@@ -82,7 +85,7 @@ void sched_start() {
     sched_set_current(&init);
     sched_task_t *thrd = kthread_create(idle, NULL);    // Run `idle` in EL1 
     thrd->context.pc = (uintptr_t)idle;
-    thrd->pgd = PGTABLE_START_ADDR;
+    memcpy((void*)PA_TO_VA(thrd->pgd), (void*)PA_TO_VA(PGTABLE_START_ADDR), PAGE_SIZE);
     sched_enqueue_task(thrd);
 }
 
