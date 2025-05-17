@@ -135,11 +135,29 @@ int stoi(const char *str, char **endptr, int base) {
 char *strchr(const char *str, char c) {
     while (*str) {
         if (*str == c) {
-        return (char *)str; // Return a pointer to the found character
+            return (char *)str; // Return a pointer to the found character
         }
         str++;
     }
     return NULL; // Return NULL if the character is not found
+}
+
+char *strrchr(const char *str, char c) {
+    const char *last = NULL;
+    char ch = (char)c;
+
+    while (*str != '\0') {
+        if (*str == ch) {
+            last = str;
+        }
+        str++;
+    }
+
+    if (ch == '\0') {
+        return (char *)str;
+    }
+
+    return (char *)last;
 }
 
 char *strtok(char *str, const char *delim) {
@@ -189,6 +207,30 @@ size_t strlen(const char *str) {
         length++;
     }
     return length;
+}
+
+char *strdup(const char *s) {
+    if (s == NULL) {
+        return NULL;
+    }
+
+    size_t len = 0;
+    while (s[len] != '\0') {
+        len++;
+    }
+    len++; // Account for the null terminator
+
+    char *new_string = (char *)malloc(len);
+
+    if (new_string == NULL) {
+        return NULL; // Allocation failed
+    }
+
+    for (size_t i = 0; i < len; i++) {
+        new_string[i] = s[i];
+    }
+
+    return new_string;
 }
 
 int split_args(char* buf, char* argv[], int max_args) {

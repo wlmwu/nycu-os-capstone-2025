@@ -9,6 +9,37 @@
 #include "kthread.h"
 #include "utils.h"
 #include "syscall.h"
+#include "fs.h"
+#include "vfs.h"
+
+static void test_vfs() {
+    struct file *f = kmalloc(sizeof(struct file));
+    char bufw1[5] = "test";
+    char *bufr1 = kmalloc(strlen(bufw1));
+
+    char bufw2[5] = "TEST";
+    char *bufr2 = kmalloc(strlen(bufw2));
+    
+    vfs_open("/file1", O_CREAT, &f);
+    uart_dbg_printf("Read buf: %s\t, Write buf: %s\n", bufr1, bufw1);
+    vfs_write(f, bufw1, strlen(bufw1));
+    vfs_close(f);
+
+    vfs_open("/file2", O_CREAT, &f);
+    uart_dbg_printf("Read buf: %s\t, Write buf: %s\n", bufr2, bufw2);
+    vfs_write(f, bufw2, strlen(bufw2));
+    vfs_close(f);
+
+    vfs_open("/file1", O_CREAT, &f);
+    vfs_read(f, bufr1, strlen(bufw1));
+    uart_dbg_printf("Read buf: %s\t, Write buf: %s\n", bufr1, bufw1);
+    vfs_close(f);
+
+    vfs_open("/file2", O_CREAT, &f);
+    vfs_read(f, bufr2, strlen(bufw2));
+    uart_dbg_printf("Read buf: %s\t, Write buf: %s\n", bufr2, bufw2);
+    vfs_close(f);
+}
 
 int main(void* arg) {   /* The value of arg is `x0` which is 0x8200000 in QEMU, so `*arg` is the pointer points to 0x8200000 */
     uart_init();
@@ -22,6 +53,9 @@ int main(void* arg) {   /* The value of arg is `x0` which is 0x8200000 in QEMU, 
     mm_init();
 
     sched_init();
+
+    fs_init();
+    test_vfs();
 
     shell_init();
     shell_run();        // Always runs in EL1

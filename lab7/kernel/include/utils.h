@@ -32,6 +32,20 @@ int strncmp(const char *str1, const char *str2, size_t n);
 char *strchr(const char *str, char c);
 
 /**
+ * @brief Finds the last occurrence of a character in a string.
+ *
+ * Searches for the character `c` in the string `str` and returns a pointer to its last occurrence.
+ *
+ * @param str A pointer to the null-terminated string to be searched.
+ * @param c The character to be located.
+ * @return A pointer to the last occurrence of the character 'c' in the
+ * string 'str', or NULL if the character is not found. If 'c'
+ * is the null terminator ('\0'), the function returns a pointer
+ * to the null terminator at the end of the string.
+ */
+char *strrchr(const char *str, char c);
+
+/**
  * @brief Splits a string into tokens based on delimiters.
  * 
  * This function tokenizes a string by splitting it into substrings, using the characters in `delim` as delimiters.
@@ -56,6 +70,19 @@ char *strtok(char *str, const char *delim);
  *       will lead to undefined behavior.
  */
 size_t strlen(const char *str);
+
+/**
+ * @brief Duplicates a string by allocating new memory.
+ *
+ * This function creates a new string that is an exact copy of the
+ * input string 's'. It allocates memory for the new string using malloc.
+ *
+ * @param s A pointer to the null-terminated string to be duplicated.
+ * @return A pointer to the newly allocated duplicate string, or NULL
+ * if 's' is NULL or if memory allocation fails. It is the caller's
+ * responsibility to free the allocated memory when it is no longer needed.
+ */
+char *strdup(const char *s);
 
 /**
  * @brief Splits a string into individual arguments (tokens).
