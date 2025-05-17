@@ -92,11 +92,51 @@ int vfs_write(struct file *file, const void *buf, size_t count) {
 }
 
 int vfs_mkdir(const char *pathname) {
-    return -ENOSYS;
+    char *path = strdup(pathname);
+    if (path[strlen(path) - 1] == '/') path[strlen(path) - 1] = '\0';
+
+    char *last_slash = strrchr(path, '/');
+    if (!last_slash) {
+        free(path);
+        return -EINVAL;
+    }
+
+    char *dirname = (last_slash == path) ? "/" : path;
+    *last_slash = '\0';
+    char *basename = last_slash + 1;
+
+    struct vnode *parent;
+    int retval = vfs_lookup(dirname, &parent);
+    if (retval != 0) {
+        free(path);
+        return retval;
+    }
+
+    struct vnode *child;
+    retval = parent->v_ops->mkdir(parent, &child, basename);
+    
+    free(path);
+    return retval;
 }
 
-int vfs_mount(const char *target, const char *filesystem) {    
-    return -ENOSYS;
+int vfs_mount(const char *target, const char *filesystem) {
+    struct vnode *mount_point;
+    int retval = vfs_lookup(target, &mount_point);
+    if (retval != 0) return retval;
+
+    struct filesystem *fs = fs_get_filesystem(filesystem);
+    if (!fs) return -ENOENT;
+
+    struct mount *new_mount = kmalloc(sizeof(struct mount));
+    retval = fs->setup_mount(fs, new_mount);
+    if (retval != 0) {
+        kfree(new_mount);
+        return retval;
+    }
+
+    mount_point->mount = new_mount;
+    
+    return 0;
 }
 
 

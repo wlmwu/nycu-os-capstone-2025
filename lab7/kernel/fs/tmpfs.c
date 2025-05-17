@@ -65,6 +65,39 @@ int tmpfs_setup_mount(struct filesystem *fs, struct mount *mount) {
     return 0;
 }
 
+static tmpfs_dentry_t* tmpfs_create_dentry(tmpfs_inode_t *parent_inode, char *name, tmpfs_inode_type_t type) {
+    struct vnode *new_vn = kmalloc(sizeof(struct vnode));
+    tmpfs_inode_t *new_in = kmalloc(sizeof(tmpfs_inode_t));
+    tmpfs_dentry_t *new_den = kmalloc(sizeof(tmpfs_dentry_t));
+
+    memcpy(new_den->name, name, strlen(name));
+    new_den->name[FS_MAX_COMPONENT_LEN] = '\0';
+    new_den->inode = new_in;
+    list_add_tail(&new_den->sibling, &parent_inode->tn_content.tn_dir.subdirs);
+    ++parent_inode->tn_content.tn_dir.num_entries;
+
+    new_in->type = type;
+    new_in->vnptr = new_vn;
+    if (type == INODE_TYPE_DIRECTORY) {
+        INIT_LIST_HEAD(&new_in->tn_content.tn_dir.subdirs);
+        new_in->tn_content.tn_dir.num_entries = 0;
+    } else if (type == INODE_TYPE_FILE) {
+        new_in->tn_content.tn_file.filesize = 0;
+    }
+    
+    new_vn->v_ops = parent_inode->vnptr->v_ops;
+    new_vn->f_ops = kmalloc(sizeof(struct file_operations));
+    new_vn->f_ops->read = tmpfs_read;
+    new_vn->f_ops->write = tmpfs_write;
+    new_vn->f_ops->open = tmpfs_open;
+    new_vn->f_ops->close = tmpfs_close;
+    new_vn->f_ops->lseek64 = tmpfs_lseek64;
+    new_vn->mount = NULL;
+    new_vn->internal = new_in;
+
+    return new_den;
+}
+
 /* vnode ops */
 
 int tmpfs_lookup(struct vnode *dnode, struct vnode **target, const char *name) {
@@ -87,44 +120,34 @@ int tmpfs_create(struct vnode *dnode, struct vnode **target, const char *name) {
     list_for_each_entry_safe(pos, tmp, &parent_inode->tn_content.tn_dir.subdirs, sibling) {
         if (strcmp(pos->name, name) == 0) return -EEXIST;
     }
-
-    struct vnode *new_vn = kmalloc(sizeof(struct vnode));
-    tmpfs_inode_t *new_in = kmalloc(sizeof(tmpfs_inode_t));
-    tmpfs_dentry_t *new_den = kmalloc(sizeof(tmpfs_dentry_t));
-
-    memcpy(new_den->name, name, strlen(name));
-    new_den->name[FS_MAX_COMPONENT_LEN] = '\0';
-    new_den->inode = new_in;
-    list_add_tail(&new_den->sibling, &parent_inode->tn_content.tn_dir.subdirs);
-    ++parent_inode->tn_content.tn_dir.num_entries;
-
-    new_in->type = INODE_TYPE_FILE;
-    new_in->vnptr = new_vn;
-    new_in->tn_content.tn_file.filesize = 0;
     
-    new_vn->v_ops = parent_inode->vnptr->v_ops;
-    new_vn->f_ops = kmalloc(sizeof(struct file_operations));
-    new_vn->f_ops->read = tmpfs_read;
-    new_vn->f_ops->write = tmpfs_write;
-    new_vn->f_ops->open = tmpfs_open;
-    new_vn->f_ops->close = tmpfs_close;
-    new_vn->f_ops->lseek64 = tmpfs_lseek64;
-    new_vn->mount = NULL;
-    new_vn->internal = new_in;
-    
-    *target = new_vn;
+    tmpfs_dentry_t *new_den = tmpfs_create_dentry(parent_inode, name, INODE_TYPE_FILE);    
+    *target = new_den->inode->vnptr;
 
     return 0;
 }
 
 int tmpfs_mkdir(struct vnode *dnode, struct vnode **target, const char *name) {
-    return -ENOSYS;
+    if (strlen(name) > FS_MAX_COMPONENT_LEN) return -ENAMETOOLONG;
+    
+    tmpfs_inode_t *parent_inode = dnode->internal;
+    tmpfs_dentry_t *pos, *tmp;
+    list_for_each_entry_safe(pos, tmp, &parent_inode->tn_content.tn_dir.subdirs, sibling) {
+        if (strcmp(pos->name, name) == 0) return -EEXIST;
+    }
+
+    tmpfs_dentry_t *new_den = tmpfs_create_dentry(parent_inode, name, INODE_TYPE_DIRECTORY);    
+    *target = new_den->inode->vnptr;
+
+    return 0;
 }
 
 /* file ops */
 
 int tmpfs_read(struct file *file, void *buf, size_t count) {
     tmpfs_inode_t *finode = file->vnode->internal;
+    if (finode->type == INODE_TYPE_DIRECTORY) return -EISDIR;
+
     int64_t len = MIN((int)count, (int)(finode->tn_content.tn_file.filesize - file->f_pos));
     if (len <= 0) return 0;
 
@@ -136,6 +159,8 @@ int tmpfs_read(struct file *file, void *buf, size_t count) {
 
 int tmpfs_write(struct file *file, const void *buf, size_t count) {
     tmpfs_inode_t *finode = file->vnode->internal;
+    if (finode->type == INODE_TYPE_DIRECTORY) return -EISDIR;
+
     int64_t len = MIN((int)count, (int)(FS_MAX_FILE_SIZE - file->f_pos));
     if (len <= 0) return -ENOSPC;
 
@@ -147,6 +172,9 @@ int tmpfs_write(struct file *file, const void *buf, size_t count) {
 }
 
 int tmpfs_open(struct vnode *fvnode, struct file **target) {
+    tmpfs_inode_t *finode = fvnode->internal;
+    if (finode->type == INODE_TYPE_DIRECTORY) return -EISDIR;
+
     struct file *file = kmalloc(sizeof(struct file));
     file->vnode = fvnode;
     file->f_pos = 0;
@@ -157,6 +185,9 @@ int tmpfs_open(struct vnode *fvnode, struct file **target) {
 }
 
 int tmpfs_close(struct file *file) {
+    tmpfs_inode_t *finode = file->vnode->internal;
+    if (finode->type == INODE_TYPE_DIRECTORY) return -EISDIR;
+
     kfree(file);
     return 0;
 }

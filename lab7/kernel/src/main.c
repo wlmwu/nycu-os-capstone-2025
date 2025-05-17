@@ -19,25 +19,60 @@ static void test_vfs() {
 
     char bufw2[5] = "TEST";
     char *bufr2 = kmalloc(strlen(bufw2));
+
+    char bufw3[5] = "Test";
+    char *bufr3 = kmalloc(strlen(bufw3));
+
+    char bufw4[5] = "TesT";
+    char *bufr4 = kmalloc(strlen(bufw4));
     
+    vfs_mkdir("/files/");
+    vfs_mkdir("/files/mnt");
+
+    vfs_mount("/files/mnt", "tmpfs");
+
+    // Write
+
     vfs_open("/file1", O_CREAT, &f);
-    uart_dbg_printf("Read buf: %s\t, Write buf: %s\n", bufr1, bufw1);
+    uart_dbg_printf("/file1:\t\t\tRead buf: %s\t, Write buf: %s\n", bufr1, bufw1);
     vfs_write(f, bufw1, strlen(bufw1));
     vfs_close(f);
 
     vfs_open("/file2", O_CREAT, &f);
-    uart_dbg_printf("Read buf: %s\t, Write buf: %s\n", bufr2, bufw2);
+    uart_dbg_printf("/file2:\t\t\tRead buf: %s\t, Write buf: %s\n", bufr2, bufw2);
     vfs_write(f, bufw2, strlen(bufw2));
     vfs_close(f);
 
+    vfs_open("/files/file2", O_CREAT, &f);
+    vfs_write(f, bufw3, strlen(bufw3));
+    uart_dbg_printf("/files/file2:\t\tRead buf: %s\t, Write buf: %s\n", bufr3, bufw3);
+    vfs_close(f);
+
+    vfs_open("/files/mnt/file2", O_CREAT, &f);
+    vfs_write(f, bufw4, strlen(bufw4));
+    uart_dbg_printf("/files/mnt/file2:\tRead buf: %s\t, Write buf: %s\n", bufr4, bufw4);
+    vfs_close(f);
+
+    // Read
+
     vfs_open("/file1", O_CREAT, &f);
     vfs_read(f, bufr1, strlen(bufw1));
-    uart_dbg_printf("Read buf: %s\t, Write buf: %s\n", bufr1, bufw1);
+    uart_dbg_printf("/file1:\t\t\tRead buf: %s\t, Write buf: %s\n", bufr1, bufw1);
     vfs_close(f);
 
     vfs_open("/file2", O_CREAT, &f);
     vfs_read(f, bufr2, strlen(bufw2));
-    uart_dbg_printf("Read buf: %s\t, Write buf: %s\n", bufr2, bufw2);
+    uart_dbg_printf("/file2:\t\t\tRead buf: %s\t, Write buf: %s\n", bufr2, bufw2);
+    vfs_close(f);
+
+    vfs_open("/files/file2", O_CREAT, &f);
+    vfs_read(f, bufr3, strlen(bufw3));
+    uart_dbg_printf("/files/file2:\t\tRead buf: %s\t, Write buf: %s\n", bufr3, bufw3);
+    vfs_close(f);
+
+    vfs_open("/files/mnt/file2", O_CREAT, &f);
+    vfs_read(f, bufr4, strlen(bufw4));
+    uart_dbg_printf("/files/mnt/file2:\tRead buf: %s\t, Write buf: %s\n", bufr4, bufw4);
     vfs_close(f);
 }
 
