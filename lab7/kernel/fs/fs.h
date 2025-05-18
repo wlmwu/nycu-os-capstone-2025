@@ -72,8 +72,9 @@ struct file {
 };
 
 struct mount {
-  struct vnode *root;
+  struct vnode *root;       // Mounted FS root vnode; its 'mount' points back here.
   struct filesystem *fs;
+  struct vnode *mntpoint;   // Vnode where this FS is mounted; its 'mount' points back here.
 };
 
 struct filesystem {
@@ -83,7 +84,5 @@ struct filesystem {
 
 int fs_register(struct filesystem *fs);
 struct filesystem* fs_get_filesystem(const char *fs_name);
-
-void fs_init();
 
 #endif // FS_H_

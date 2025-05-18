@@ -28,8 +28,9 @@ static void test_vfs() {
     
     vfs_mkdir("/files/");
     vfs_mkdir("/files/mnt");
-
+    
     vfs_mount("/files/mnt", "tmpfs");
+    vfs_mkdir("/files/mnt/files");
 
     // Write
 
@@ -74,6 +75,19 @@ static void test_vfs() {
     vfs_read(f, bufr4, strlen(bufw4));
     uart_dbg_printf("/files/mnt/file2:\tRead buf: %s\t, Write buf: %s\n", bufr4, bufw4);
     vfs_close(f);
+
+    //  Relative path handle
+    char buf[8];
+    char path[] = "/.././files/./../files/./mnt/files/../../file2";
+    memset(buf, 0, 8);
+    int retval = vfs_open(path, O_RDONLY, &f);
+    if (retval == 0) {
+        vfs_read(f, buf, strlen(bufw3));
+        uart_dbg_printf("%s\tRead buf: %s\t, Write buf: %s\n", path, buf, bufw3);
+    } else {
+        uart_dbg_printf("Open Error: %d\n", retval);
+    }
+    vfs_close(f);
 }
 
 int main(void* arg) {   /* The value of arg is `x0` which is 0x8200000 in QEMU, so `*arg` is the pointer points to 0x8200000 */
@@ -89,7 +103,7 @@ int main(void* arg) {   /* The value of arg is `x0` which is 0x8200000 in QEMU, 
 
     sched_init();
 
-    fs_init();
+    vfs_init();
     test_vfs();
 
     shell_init();

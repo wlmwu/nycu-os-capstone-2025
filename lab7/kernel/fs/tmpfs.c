@@ -27,6 +27,7 @@ typedef struct tmpfs_inode {
         struct {
             struct list_head subdirs;       // List head of subdirs (children)
             size_t num_entries;
+            struct tmpfs_inode *parent;      // Parent directory (root inode points to itself)
         } tn_dir;
         
         // INODE_TYPE_FILE
@@ -56,7 +57,9 @@ int tmpfs_setup_mount(struct filesystem *fs, struct mount *mount) {
     inode->vnptr = root;
     INIT_LIST_HEAD(&inode->tn_content.tn_dir.subdirs);
     inode->tn_content.tn_dir.num_entries = 0;
+    inode->tn_content.tn_dir.parent = inode;
 
+    root->mount = NULL;
     root->internal = inode;
     
     mount->root = root;
@@ -65,7 +68,7 @@ int tmpfs_setup_mount(struct filesystem *fs, struct mount *mount) {
     return 0;
 }
 
-static tmpfs_dentry_t* tmpfs_create_dentry(tmpfs_inode_t *parent_inode, char *name, tmpfs_inode_type_t type) {
+static tmpfs_dentry_t* tmpfs_create_dentry(tmpfs_inode_t *parent_inode, const char *name, tmpfs_inode_type_t type) {
     struct vnode *new_vn = kmalloc(sizeof(struct vnode));
     tmpfs_inode_t *new_in = kmalloc(sizeof(tmpfs_inode_t));
     tmpfs_dentry_t *new_den = kmalloc(sizeof(tmpfs_dentry_t));
@@ -81,6 +84,7 @@ static tmpfs_dentry_t* tmpfs_create_dentry(tmpfs_inode_t *parent_inode, char *na
     if (type == INODE_TYPE_DIRECTORY) {
         INIT_LIST_HEAD(&new_in->tn_content.tn_dir.subdirs);
         new_in->tn_content.tn_dir.num_entries = 0;
+        new_in->tn_content.tn_dir.parent = parent_inode;
     } else if (type == INODE_TYPE_FILE) {
         new_in->tn_content.tn_file.filesize = 0;
     }
@@ -101,6 +105,15 @@ static tmpfs_dentry_t* tmpfs_create_dentry(tmpfs_inode_t *parent_inode, char *na
 /* vnode ops */
 
 int tmpfs_lookup(struct vnode *dnode, struct vnode **target, const char *name) {
+    // uart_dbg_printf("Component: [%s]\n", name);
+    if (strcmp(name, ".") == 0) {
+        *target = dnode;
+        return 0;
+    } else if (strcmp(name, "..") == 0) {
+        *target = ((tmpfs_inode_t*)(dnode->internal))->tn_content.tn_dir.parent->vnptr;
+        return 0;
+    }
+
     tmpfs_inode_t *parent_inode = dnode->internal;
     tmpfs_dentry_t *pos, *tmp;
     list_for_each_entry_safe(pos, tmp, &parent_inode->tn_content.tn_dir.subdirs, sibling) {

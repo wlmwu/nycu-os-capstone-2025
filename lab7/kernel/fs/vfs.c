@@ -12,7 +12,7 @@ static struct filesystem tmpfs_fs = {
     .setup_mount = tmpfs_setup_mount
 };
 
-void fs_init() {
+void vfs_init() {
     fs_register(&tmpfs_fs);
     rootfs = kmalloc(sizeof(struct mount));
     tmpfs_fs.setup_mount(&tmpfs_fs, rootfs);
@@ -28,6 +28,10 @@ int vfs_lookup(const char *pathname, struct vnode **target) {
     char *path = strdup(pathname + 1);      // Skip leading '/'
     char *tok = strtok(path, "/");
     while (tok) {
+        if (strcmp(tok, "..") == 0 && curr->mount->root == curr) {   // `curr` is the root vnode of a mounted file system
+            curr = curr->mount->mntpoint;                            // Move `curr` to the mount point vnode
+        }
+
         struct vnode *next;
         int retval = curr->v_ops->lookup(curr, &next, tok);
         if (retval != 0) {
@@ -135,6 +139,8 @@ int vfs_mount(const char *target, const char *filesystem) {
     }
 
     mount_point->mount = new_mount;
+    new_mount->mntpoint = mount_point;
+    new_mount->root->mount = new_mount;
     
     return 0;
 }

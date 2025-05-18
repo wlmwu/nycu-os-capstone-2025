@@ -34,7 +34,7 @@ struct vnode_operations {
 };
 
 struct vnode {
-    struct mount *mount;
+    struct mount *mount;              // Non-NULL if this vnode is a mount point or the root of a mounted FS
     struct vnode_operations *v_ops;
     struct file_operations *f_ops;
     void *internal;                   // Stored inode defined by filesystems themselves
@@ -47,6 +47,8 @@ int vfs_write(struct file *file, const void *buf, size_t count);
 int vfs_lookup(const char *pathname, struct vnode **target);
 int vfs_mkdir(const char *pathname);
 int vfs_mount(const char *target, const char *filesystem);
+
+void vfs_init();
 
 // https://github.com/torvalds/linux/blob/master/include/uapi/asm-generic/fcntl.h
 
