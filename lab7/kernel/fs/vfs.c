@@ -10,7 +10,7 @@ int vfs_lookup(struct vnode *start, const char *pathname, struct vnode **target)
     
     struct vnode *curr;
     char *path, *saveptr;
-    if (strcmp(pathname, "/") == 0) {
+    if (strncmp(pathname, "/", strlen("/")) == 0) {
         curr = root;
         path = strdup(pathname + 1);        // Skip leading '/'
     } else {

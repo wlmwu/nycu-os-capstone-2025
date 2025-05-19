@@ -73,8 +73,8 @@ static tmpfs_dentry_t* tmpfs_create_dentry(tmpfs_inode_t *parent_inode, const ch
     tmpfs_inode_t *new_in = kmalloc(sizeof(tmpfs_inode_t));
     tmpfs_dentry_t *new_den = kmalloc(sizeof(tmpfs_dentry_t));
 
+    memset(new_den->name, 0, sizeof(new_den->name));
     memcpy(new_den->name, name, strlen(name));
-    new_den->name[FS_MAX_COMPONENT_LEN] = '\0';
     new_den->inode = new_in;
     list_add_tail(&new_den->sibling, &parent_inode->tn_content.tn_dir.subdirs);
     ++parent_inode->tn_content.tn_dir.num_entries;
@@ -105,7 +105,6 @@ static tmpfs_dentry_t* tmpfs_create_dentry(tmpfs_inode_t *parent_inode, const ch
 /* vnode ops */
 
 int tmpfs_lookup(struct vnode *dnode, struct vnode **target, const char *name) {
-    // uart_dbg_printf("Component: [%s]\n", name);
     if (strcmp(name, ".") == 0) {
         *target = dnode;
         return 0;

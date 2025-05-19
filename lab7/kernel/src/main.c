@@ -11,6 +11,7 @@
 #include "syscall.h"
 #include "fs.h"
 #include "vfs.h"
+#include "initramfs.h"
 
 static void test_vfs() {
     fs_vnode_t *root = fs_get_root()->root;
@@ -100,6 +101,18 @@ static void test_vfs() {
         uart_dbg_printf("Open Error: %d\n", retval);
     }
     vfs_close(f);
+
+    char file1[64];             // Size of file1.txt is 63 bytes
+    char file1path[] = "/initramfs/file1.txt";
+    memset(file1, 0, 64);
+    retval = vfs_open(root, file1path, O_RDONLY, &f);
+    if (retval == 0) {
+        vfs_read(f, file1, 64);     
+        uart_dbg_printf("%s: \tRead file1.txt: %s\t\n", file1path, file1);
+    } else {
+        uart_dbg_printf("Open Error: %d\n", retval);
+    }
+    vfs_close(f);
 }
 
 int main(void* arg) {   /* The value of arg is `x0` which is 0x8200000 in QEMU, so `*arg` is the pointer points to 0x8200000 */
@@ -116,6 +129,7 @@ int main(void* arg) {   /* The value of arg is `x0` which is 0x8200000 in QEMU, 
     sched_init();
 
     fs_init();
+    initramfs_init();
     test_vfs();
 
     shell_init();
