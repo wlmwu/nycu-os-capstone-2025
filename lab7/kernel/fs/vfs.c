@@ -5,28 +5,20 @@
 #include "errno.h"
 #include "tmpfs.h"
 
-static struct mount *rootfs;
-
-static struct filesystem tmpfs_fs = {
-    .name = "tmpfs",
-    .setup_mount = tmpfs_setup_mount
-};
-
-void vfs_init() {
-    fs_register(&tmpfs_fs);
-    rootfs = kmalloc(sizeof(struct mount));
-    tmpfs_fs.setup_mount(&tmpfs_fs, rootfs);
-}
-
-int vfs_lookup(const char *pathname, struct vnode **target) {
+int vfs_lookup(struct vnode *start, const char *pathname, struct vnode **target) {
+    struct vnode *root = fs_get_root()->root;
+    
+    struct vnode *curr;
+    char *path, *saveptr;
     if (strcmp(pathname, "/") == 0) {
-        *target = rootfs->root;
-        return 0;
+        curr = root;
+        path = strdup(pathname + 1);        // Skip leading '/'
+    } else {
+        curr = start;
+        path = strdup(pathname);
     }
 
-    struct vnode *curr = rootfs->root;
-    char *path = strdup(pathname + 1);      // Skip leading '/'
-    char *tok = strtok(path, "/");
+    char *tok = strtok_r(path, "/", &saveptr);
     while (tok) {
         if (strcmp(tok, "..") == 0 && curr->mount->root == curr) {   // `curr` is the root vnode of a mounted file system
             curr = curr->mount->mntpoint;                            // Move `curr` to the mount point vnode
@@ -42,16 +34,16 @@ int vfs_lookup(const char *pathname, struct vnode **target) {
         if (curr->mount != NULL) {
             curr = curr->mount->root;
         }
-        tok = strtok(NULL, "/");
+        tok = strtok_r(NULL, "/", &saveptr);
     }
     free(path);
     *target = curr;
     return 0;
 }
 
-int vfs_open(const char *pathname, int flags, struct file **target) {
+int vfs_open(struct vnode *start, const char *pathname, int flags, struct file **target) {
     struct vnode *vn;
-    int retval = vfs_lookup(pathname, &vn);
+    int retval = vfs_lookup(start, pathname, &vn);
     if (retval == -ENOENT && (flags & O_CREAT)) {
         char *path = strdup(pathname);
         char *last_slash = strrchr(path, '/');
@@ -63,7 +55,7 @@ int vfs_open(const char *pathname, int flags, struct file **target) {
         *last_slash = '\0';
         char *basename = last_slash + 1;
         struct vnode *parent;
-        if (vfs_lookup(*path ? path : "/", &parent) != 0) {
+        if (vfs_lookup(start, *path ? path : "/", &parent) != 0) {
             free(path);
             return -ENOENT;
         }
@@ -95,7 +87,7 @@ int vfs_write(struct file *file, const void *buf, size_t count) {
     return file->f_ops->write(file, buf, count);
 }
 
-int vfs_mkdir(const char *pathname) {
+int vfs_mkdir(struct vnode *start, const char *pathname) {
     char *path = strdup(pathname);
     if (path[strlen(path) - 1] == '/') path[strlen(path) - 1] = '\0';
 
@@ -110,7 +102,7 @@ int vfs_mkdir(const char *pathname) {
     char *basename = last_slash + 1;
 
     struct vnode *parent;
-    int retval = vfs_lookup(dirname, &parent);
+    int retval = vfs_lookup(start, dirname, &parent);
     if (retval != 0) {
         free(path);
         return retval;
@@ -123,9 +115,9 @@ int vfs_mkdir(const char *pathname) {
     return retval;
 }
 
-int vfs_mount(const char *target, const char *filesystem) {
+int vfs_mount(struct vnode *start, const char *target, const char *filesystem) {
     struct vnode *mount_point;
-    int retval = vfs_lookup(target, &mount_point);
+    int retval = vfs_lookup(start, target, &mount_point);
     if (retval != 0) return retval;
 
     struct filesystem *fs = fs_get_filesystem(filesystem);

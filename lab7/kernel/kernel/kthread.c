@@ -59,6 +59,9 @@ sched_task_t* kthread_create(sched_fn_t fn, void *args) {
     memset((void*)PA_TO_VA(thrd->pgd), 0, PAGE_SIZE);
 
     INIT_LIST_HEAD(&thrd->vm_area_queue);
+
+    thrd->cwd = NULL;
+    memset(thrd->fdtable, 0, sizeof(thrd->fdtable));
     
     return thrd;
 }

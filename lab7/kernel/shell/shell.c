@@ -147,7 +147,10 @@ void command_exec(int argc, char **argv) {
     void *prog = NULL;
     size_t progsize = 0;
     proc_load_prog(filename, &prog, &progsize);
-    if (!prog) return;
+    if (!prog) {
+        irq_enable();
+        return;
+    }
     proc_create(prog, NULL, progsize);
 
     sched_start();     // Jump to thread queue

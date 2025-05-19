@@ -7,14 +7,16 @@
 #define FS_MAX_FILE_SIZE        4096
 #define FS_MAX_COMPONENT_LEN    15
 #define FS_MAX_NUM_ENTRY        16
+#define FS_NUM_FD               16
 
 // Defined in vfs.h
-struct vnode;
+typedef struct vnode fs_vnode_t;
 struct vnode_operations;
 
-struct mount;
-struct file;
+typedef struct mount fs_mount_t;
+typedef struct file fs_file_t;
 struct file_operations;
+struct filesystem;
 
 struct file_operations {
     /**
@@ -84,5 +86,9 @@ struct filesystem {
 
 int fs_register(struct filesystem *fs);
 struct filesystem* fs_get_filesystem(const char *fs_name);
+
+void fs_init();
+
+fs_mount_t* fs_get_root();
 
 #endif // FS_H_

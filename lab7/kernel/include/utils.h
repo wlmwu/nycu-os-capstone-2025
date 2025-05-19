@@ -58,6 +58,22 @@ char *strrchr(const char *str, char c);
 char *strtok(char *str, const char *delim);
 
 /**
+ * @brief Splits a string into tokens based on delimiters (reentrant version).
+ *
+ * This function tokenizes a string by splitting it into substrings, using the characters in `delim` as delimiters.
+ * Unlike `strtok`, it is reentrant and thread-safe.
+ *
+ * @param str     A pointer to the string to be tokenized. On the first call, it should point to the string.
+ * For subsequent calls to continue tokenizing the same string, it should be NULL.
+ * @param delim   A pointer to a string containing the delimiters.
+ * @param saveptr A pointer to a `char *` variable that the function uses to store
+ * information about its current position in the string between calls.
+ *
+ * @return char* A pointer to the next token in the string, or NULL if there are no more tokens.
+ */
+char *strtok_r(char *str, const char *delim, char **saveptr);
+
+/**
  * @brief Computes the length of a null-terminated C string.
  *
  * @param str A pointer to a null-terminated C string (const char*).

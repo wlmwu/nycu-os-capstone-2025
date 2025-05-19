@@ -40,15 +40,13 @@ struct vnode {
     void *internal;                   // Stored inode defined by filesystems themselves
 };
 
-int vfs_open(const char *pathname, int flags, struct file **target);
-int vfs_close(struct file *file);
-int vfs_read(struct file *file, void *buf, size_t count);
-int vfs_write(struct file *file, const void *buf, size_t count);
-int vfs_lookup(const char *pathname, struct vnode **target);
-int vfs_mkdir(const char *pathname);
-int vfs_mount(const char *target, const char *filesystem);
-
-void vfs_init();
+int vfs_open(fs_vnode_t *start, const char *pathname, int flags, fs_file_t **target);
+int vfs_close(fs_file_t *file);
+int vfs_read(fs_file_t *file, void *buf, size_t count);
+int vfs_write(fs_file_t *file, const void *buf, size_t count);
+int vfs_lookup(fs_vnode_t *start, const char *pathname, fs_vnode_t **target);
+int vfs_mkdir(fs_vnode_t *start, const char *pathname);
+int vfs_mount(fs_vnode_t *start, const char *target, const char *filesystem);
 
 // https://github.com/torvalds/linux/blob/master/include/uapi/asm-generic/fcntl.h
 

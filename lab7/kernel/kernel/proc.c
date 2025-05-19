@@ -7,8 +7,7 @@
 #include "utils.h"
 #include "slab.h"
 #include "vm.h"
-#include "irq.h"
-#include "buddy.h"
+#include "fs.h"
 #include <stdint.h>
 
 int proc_load_prog(char *filename, void **prog, size_t *progsize) {
@@ -32,6 +31,7 @@ sched_task_t* proc_create(void *prog, void *args, size_t progsize) {
     sched_task_t *thrd = kthread_create(prog, args);
     thrd->size = progsize;
     proc_setup_vma(thrd, prog, progsize);
+    proc_setup_fs(thrd);
     sched_enqueue_task(thrd);
     return thrd;
 }
@@ -40,6 +40,10 @@ void proc_setup_vma(sched_task_t *thrd, void *prog, size_t progsize) {
     vma_add(thrd, PROC_ENTRY_POINT, PROC_ENTRY_POINT + progsize, PROT_READ | PROT_WRITE | PROT_EXEC, VA_TO_PA(prog));   // Require designated virtual address mapping only
     vma_add(thrd, PROC_USTACK_BASE, PROC_USTACK_BASE + PROC_STACK_SIZE, PROT_READ | PROT_WRITE | PROT_EXEC, 0);
     vm_map_pages(thrd, PROC_FRAMEBUF_PTR, PROC_FRAMEBUF_PTR, PROC_FRAMEBUF_SIZE, PROT_READ | PROT_WRITE | PROT_EXEC);   // Require designated physical address mapping
+}
+
+void proc_setup_fs(sched_task_t *thrd) {
+    thrd->cwd = fs_get_root()->root;
 }
 
 void proc_release(sched_task_t *thrd) {

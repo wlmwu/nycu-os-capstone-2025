@@ -17,6 +17,7 @@
 int proc_load_prog(char *filename, void **prog, size_t *progsize);
 
 void proc_setup_vma(sched_task_t *thrd, void *prog, size_t progsize);
+void proc_setup_fs(sched_task_t *thrd);
 
 sched_task_t* proc_create(void *prog, void *args, size_t progsize);
 void proc_release(sched_task_t *thrd);

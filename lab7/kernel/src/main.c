@@ -13,6 +13,7 @@
 #include "vfs.h"
 
 static void test_vfs() {
+    fs_vnode_t *root = fs_get_root()->root;
     struct file *f = kmalloc(sizeof(struct file));
     char bufw1[5] = "test";
     char *bufr1 = kmalloc(strlen(bufw1));
@@ -26,64 +27,75 @@ static void test_vfs() {
     char bufw4[5] = "TesT";
     char *bufr4 = kmalloc(strlen(bufw4));
     
-    vfs_mkdir("/files/");
-    vfs_mkdir("/files/mnt");
+    vfs_mkdir(root, "/files/");
+    vfs_mkdir(root, "/files/mnt");
     
-    vfs_mount("/files/mnt", "tmpfs");
-    vfs_mkdir("/files/mnt/files");
+    vfs_mount(root, "/files/mnt", "tmpfs");
+    vfs_mkdir(root, "/files/mnt/files");
 
     // Write
 
-    vfs_open("/file1", O_CREAT, &f);
+    vfs_open(root, "/file1", O_CREAT, &f);
     uart_dbg_printf("/file1:\t\t\tRead buf: %s\t, Write buf: %s\n", bufr1, bufw1);
     vfs_write(f, bufw1, strlen(bufw1));
     vfs_close(f);
 
-    vfs_open("/file2", O_CREAT, &f);
+    vfs_open(root, "/file2", O_CREAT, &f);
     uart_dbg_printf("/file2:\t\t\tRead buf: %s\t, Write buf: %s\n", bufr2, bufw2);
     vfs_write(f, bufw2, strlen(bufw2));
     vfs_close(f);
 
-    vfs_open("/files/file2", O_CREAT, &f);
+    vfs_open(root, "/files/file2", O_CREAT, &f);
     vfs_write(f, bufw3, strlen(bufw3));
     uart_dbg_printf("/files/file2:\t\tRead buf: %s\t, Write buf: %s\n", bufr3, bufw3);
     vfs_close(f);
 
-    vfs_open("/files/mnt/file2", O_CREAT, &f);
+    vfs_open(root, "/files/mnt/file2", O_CREAT, &f);
     vfs_write(f, bufw4, strlen(bufw4));
     uart_dbg_printf("/files/mnt/file2:\tRead buf: %s\t, Write buf: %s\n", bufr4, bufw4);
     vfs_close(f);
 
     // Read
 
-    vfs_open("/file1", O_CREAT, &f);
+    vfs_open(root, "/file1", O_CREAT, &f);
     vfs_read(f, bufr1, strlen(bufw1));
     uart_dbg_printf("/file1:\t\t\tRead buf: %s\t, Write buf: %s\n", bufr1, bufw1);
     vfs_close(f);
 
-    vfs_open("/file2", O_CREAT, &f);
+    vfs_open(root, "/file2", O_CREAT, &f);
     vfs_read(f, bufr2, strlen(bufw2));
     uart_dbg_printf("/file2:\t\t\tRead buf: %s\t, Write buf: %s\n", bufr2, bufw2);
     vfs_close(f);
 
-    vfs_open("/files/file2", O_CREAT, &f);
+    vfs_open(root, "/files/file2", O_CREAT, &f);
     vfs_read(f, bufr3, strlen(bufw3));
     uart_dbg_printf("/files/file2:\t\tRead buf: %s\t, Write buf: %s\n", bufr3, bufw3);
     vfs_close(f);
 
-    vfs_open("/files/mnt/file2", O_CREAT, &f);
+    vfs_open(root, "/files/mnt/file2", O_CREAT, &f);
     vfs_read(f, bufr4, strlen(bufw4));
     uart_dbg_printf("/files/mnt/file2:\tRead buf: %s\t, Write buf: %s\n", bufr4, bufw4);
     vfs_close(f);
 
     //  Relative path handle
     char buf[8];
-    char path[] = "/.././files/./../files/./mnt/files/../../file2";
+    char path1[] = "/.././files/./../files/./mnt/files/../../file2";
     memset(buf, 0, 8);
-    int retval = vfs_open(path, O_RDONLY, &f);
+    int retval = vfs_open(root, path1, O_RDONLY, &f);
     if (retval == 0) {
         vfs_read(f, buf, strlen(bufw3));
-        uart_dbg_printf("%s\tRead buf: %s\t, Write buf: %s\n", path, buf, bufw3);
+        uart_dbg_printf("%s: \tRead buf: %s\t, Write buf: %s\n", path1, buf, bufw3);
+    } else {
+        uart_dbg_printf("Open Error: %d\n", retval);
+    }
+    vfs_close(f);
+
+    char path2[] = "./file1";
+    memset(buf, 0, 8);
+    retval = vfs_open(root, path2, O_RDONLY, &f);
+    if (retval == 0) {
+        vfs_read(f, buf, strlen(bufw1));
+        uart_dbg_printf("%s: \tRead buf: %s\t, Write buf: %s\n", path2, buf, bufw1);
     } else {
         uart_dbg_printf("Open Error: %d\n", retval);
     }
@@ -103,7 +115,7 @@ int main(void* arg) {   /* The value of arg is `x0` which is 0x8200000 in QEMU, 
 
     sched_init();
 
-    vfs_init();
+    fs_init();
     test_vfs();
 
     shell_init();

@@ -201,6 +201,46 @@ char *strtok(char *str, const char *delim) {
     return start;
 }
 
+char *strtok_r(char *str, const char *delim, char **saveptr) {
+    char *start; // The beginning of the current token
+
+    // If the input string is NULL, continue from where we left off
+    if (str != NULL) {
+        *saveptr = str;
+    }
+
+    // If there is no string left to process
+    if (*saveptr == NULL) {
+        return NULL;
+    }
+
+    // Skip leading delimiters
+    while (**saveptr && strchr(delim, **saveptr)) {
+        (*saveptr)++;
+    }
+
+    // If we reached the end of the string
+    if (**saveptr == '\0') {
+        return NULL;
+    }
+
+    // Set the start of the token
+    start = *saveptr;
+
+    // Find the next delimiter or end of string
+    while (**saveptr && !strchr(delim, **saveptr)) {
+        (*saveptr)++;
+    }
+
+    // If we found a delimiter, terminate the token there
+    if (**saveptr != '\0') {
+        **saveptr = '\0';
+        (*saveptr)++; // Move past the delimiter for the next call
+    }
+
+    return start;
+}
+
 size_t strlen(const char *str) {
     size_t length = 0;
     while (str[length] != '\0') {

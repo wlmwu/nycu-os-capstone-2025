@@ -4,6 +4,7 @@
 #include "list.h"
 #include "signal.h"
 #include "exception.h"
+#include "fs.h"
 #include <stdint.h>
 #include <stddef.h>
 
@@ -32,12 +33,18 @@ typedef struct sched_task {
     sched_fn_t fn;							// Entry point address of the user program
     void *args;								// Argument passed to the user program's entry point (fn)
     size_t size;							// Size of the user program
-	sighandler_t sighandlers[NSIG];			// Array of signal handlers registered by the user
+	
+    sighandler_t sighandlers[NSIG];			// Array of signal handlers registered by the user
     uint64_t sigpending;					// Bitmask of pending signals for the task
     trapframe_t *sigcontext;				// Saved context before signal handler execution
+    
     uint64_t pgd;                           // PGD (physical address) of the process
     struct list_head vm_area_queue;         // List head to link all `vm_area_t`s
-	struct list_head list;					// List node to link all tasks
+    
+    fs_vnode_t *cwd;                        // Current working directory
+    fs_file_t *fdtable[FS_NUM_FD];          // File descriptor table
+	
+    struct list_head list;					// List node to link all tasks
 } sched_task_t;
 
 void schedule();

@@ -11,6 +11,8 @@
 #include "proc.h"
 #include "mmu.h"
 #include "vm.h"
+#include "vfs.h"
+#include "errno.h"
 
 static int sys_getpid(trapframe_t *tf) {
     sched_task_t *curr = sched_get_current();
@@ -18,7 +20,7 @@ static int sys_getpid(trapframe_t *tf) {
     return pid;
 }
 
-static int sys_read(trapframe_t *tf) {
+static int sys_gets(trapframe_t *tf) {
     char *ptr = (char*)(tf->x[0]);
     size_t sz = tf->x[1];
     while (sz--) {
@@ -28,7 +30,7 @@ static int sys_read(trapframe_t *tf) {
     return tf->x[1];
 }
 
-static int sys_write(trapframe_t *tf) {
+static int sys_puts(trapframe_t *tf) {
     char *str = (char*)(tf->x[0]);
     size_t sz = tf->x[1];
     while ((*str) && (sz--)) {
@@ -51,6 +53,7 @@ static int sys_exec(trapframe_t *tf) {
     
     vm_release(curr);
     proc_setup_vma(curr, prog, progsize);
+    proc_setup_fs(curr);
 
     memset(curr->sighandlers, 0, sizeof(curr->sighandlers));
 
@@ -73,6 +76,7 @@ static int sys_fork(trapframe_t *tf) {
     memcpy(child->kstack, parent->kstack, PROC_STACK_SIZE);
     vm_copy(child, parent);
     vm_map_pages(child, PROC_FRAMEBUF_PTR, PROC_FRAMEBUF_PTR, PROC_FRAMEBUF_SIZE, PROT_READ | PROT_WRITE | PROT_EXEC);      // Require designated physical address mapping
+    proc_setup_fs(child);
 
     uintptr_t sp, fp;
     asm volatile(
@@ -181,10 +185,100 @@ static int sys_mmap(trapframe_t *tf) {
     return (int)vm_mmap(curr, addr, len, prot, flags, fd, file_offset);
 }
 
+static int sys_open(trapframe_t *tf) {
+    sched_task_t *curr = sched_get_current();
+    char *pathname = (char*)(tf->x[0]);
+    int flags = tf->x[1];
+    
+    fs_file_t *file;
+    int retval = vfs_open(curr->cwd, pathname, flags, &file);
+    if (retval != 0) return retval;
+
+    for (int fd = 0; fd < FS_NUM_FD; ++fd) {
+        if (!curr->fdtable[fd]) {
+            curr->fdtable[fd] = file;
+            return fd;
+        }
+    }
+    vfs_close(file);
+    return -EMFILE;
+}
+
+static int sys_close(trapframe_t *tf) {
+    sched_task_t *curr = sched_get_current();
+    int fd = tf->x[0];
+    if (fd < 0 || fd >= FS_NUM_FD || !curr->fdtable[fd]) return -EBADF;
+
+    fs_file_t *file = curr->fdtable[fd];
+    int retval = vfs_close(file);
+    curr->fdtable[fd] = NULL;
+
+    return retval;
+}
+
+static int sys_write(trapframe_t *tf) {
+    sched_task_t *curr = sched_get_current();
+    int fd = tf->x[0];
+    void *buf = (void*)(tf->x[1]);
+    size_t count = tf->x[2];
+    if (fd < 0 || fd >= FS_NUM_FD || !curr->fdtable[fd]) return -EBADF;
+
+    fs_file_t *file = curr->fdtable[fd];
+    int retval = vfs_write(file, buf, count);
+
+    return retval;
+}
+
+static int sys_read(trapframe_t *tf) {
+    sched_task_t *curr = sched_get_current();
+    int fd = tf->x[0];
+    void *buf = (void*)(tf->x[1]);
+    size_t count = tf->x[2];
+    if (fd < 0 || fd >= FS_NUM_FD || !curr->fdtable[fd]) return -EBADF;
+
+    fs_file_t *file = curr->fdtable[fd];
+    int retval = vfs_read(file, buf, count);
+
+    return retval;
+}
+
+static int sys_mkdir(trapframe_t *tf) {
+    sched_task_t *curr = sched_get_current();
+    char *pathname = (char*)(tf->x[0]);
+    unsigned mode = tf->x[1];           // Unused
+
+    int retval = vfs_mkdir(curr->cwd, pathname);
+    return retval;
+}
+
+static int sys_mount(trapframe_t *tf) {
+    sched_task_t *curr = sched_get_current();
+    char *src = (char*)(tf->x[0]);
+    char *target = (char*)(tf->x[1]);
+    char *filesystem = (char*)(tf->x[2]);
+    unsigned long flags = tf->x[3];
+    void *data = (void*)(tf->x[4]);
+
+    int retval = vfs_mount(curr->cwd, target, filesystem);
+    return retval;
+}
+
+static int sys_chdir(trapframe_t *tf) {
+    sched_task_t *curr = sched_get_current();
+    char *path = (char*)(tf->x[0]);
+
+    fs_vnode_t *new_cwd;
+    int retval = vfs_lookup(curr->cwd, path, &new_cwd);
+    if (retval == 0) curr->cwd = new_cwd;
+
+    return retval;
+}
+
+
 static int (*syscalls[])(trapframe_t *tf) = {
     [SYS_GETPID]    sys_getpid,
-    [SYS_READ]      sys_read,
-    [SYS_WRITE]     sys_write,
+    [SYS_GETS]      sys_gets,
+    [SYS_PUTS]      sys_puts,
     [SYS_EXEC]      sys_exec,
     [SYS_FORK]      sys_fork,
     [SYS_EXIT]      sys_exit,
@@ -195,6 +289,13 @@ static int (*syscalls[])(trapframe_t *tf) = {
     [SYS_SIGKILL]   sys_sigkill,
     [SYS_SIGRETURN] sys_sigreturn,
     [SYS_MMAP]      sys_mmap,
+    [SYS_OPEN]      sys_open,
+    [SYS_CLOSE]     sys_close,
+    [SYS_WRITE]     sys_write,
+    [SYS_READ]      sys_read,
+    [SYS_MKDIR]     sys_mkdir,
+    [SYS_MOUNT]     sys_mount,
+    [SYS_CHDIR]     sys_chdir,
 };
 
 int syscall_handle(trapframe_t *tf) {
