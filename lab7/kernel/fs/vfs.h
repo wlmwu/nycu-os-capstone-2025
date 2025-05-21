@@ -2,6 +2,7 @@
 #define VFS_H_
 
 #include "fs.h"
+#include "device.h"
 
 struct vnode_operations {
     /**
@@ -31,6 +32,16 @@ struct vnode_operations {
      * @return 0 on success, or a negative error code on failure.
      */
     int (*mkdir)(struct vnode *dnode, struct vnode **target, const char *name);
+    /**
+     * @brief Creates a new special file (device node) within a directory vnode.
+     *
+     * @param dnode Pointer to the vnode structure of the parent directory.
+     * @param target Pointer to a vnode pointer where the new special file's vnode will be stored.
+     * @param name The name of the new special file to create.
+     * @param dev The device number (combination of major and minor numbers).
+     * @return 0 on success, or a negative error code on failure.
+     */
+    int (*mknod)(struct vnode *dnode, struct vnode **target, const char *name, uint32_t dev);
 };
 
 struct vnode {
@@ -46,6 +57,7 @@ int vfs_read(fs_file_t *file, void *buf, size_t count);
 int vfs_write(fs_file_t *file, const void *buf, size_t count);
 int vfs_lookup(fs_vnode_t *start, const char *pathname, fs_vnode_t **target);
 int vfs_mkdir(fs_vnode_t *start, const char *pathname);
+int vfs_mknod(fs_vnode_t *start, const char *pathname, dev_t dev);
 int vfs_mount(fs_vnode_t *start, const char *target, const char *filesystem);
 
 // https://github.com/torvalds/linux/blob/master/include/uapi/asm-generic/fcntl.h

@@ -15,6 +15,7 @@ static struct filesystem tmpfs_fs = {
 };
 
 void fs_init() {
+    memset(filesystems, 0, sizeof(filesystems));
     fs_register(&tmpfs_fs);
     rootfs = kmalloc(sizeof(struct mount));
     tmpfs_fs.setup_mount(&tmpfs_fs, rootfs);

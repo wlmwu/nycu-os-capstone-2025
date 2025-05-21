@@ -3,6 +3,7 @@
 
 #include "vfs.h"
 #include "fs.h"
+#include "device.h"
 
 int tmpfs_setup_mount(struct filesystem *fs, struct mount *mount);
 
@@ -11,6 +12,7 @@ int tmpfs_setup_mount(struct filesystem *fs, struct mount *mount);
 int tmpfs_lookup(struct vnode *dnode, struct vnode **target, const char *name);
 int tmpfs_create(struct vnode *dnode, struct vnode **target, const char *name);
 int tmpfs_mkdir(struct vnode *dnode, struct vnode **target, const char *name);
+int tmpfs_mknod(struct vnode *dnode, struct vnode **target, const char *name, dev_t dev);
 
 /* file ops */
 

@@ -4,6 +4,7 @@
 #include "utils.h"
 #include "errno.h"
 #include "tmpfs.h"
+#include "device.h"
 
 int vfs_lookup(struct vnode *start, const char *pathname, struct vnode **target) {
     struct vnode *root = fs_get_root()->root;
@@ -110,6 +111,34 @@ int vfs_mkdir(struct vnode *start, const char *pathname) {
 
     struct vnode *child;
     retval = parent->v_ops->mkdir(parent, &child, basename);
+    
+    free(path);
+    return retval;
+}
+
+int vfs_mknod(fs_vnode_t *start, const char *pathname, dev_t dev) {
+    char *path = strdup(pathname);
+    if (path[strlen(path) - 1] == '/') path[strlen(path) - 1] = '\0';
+
+    char *last_slash = strrchr(path, '/');
+    if (!last_slash) {
+        free(path);
+        return -EINVAL;
+    }
+
+    char *dirname = (last_slash == path) ? "/" : path;
+    *last_slash = '\0';
+    char *basename = last_slash + 1;
+
+    struct vnode *parent;
+    int retval = vfs_lookup(start, dirname, &parent);
+    if (retval != 0) {
+        free(path);
+        return retval;
+    }
+
+    struct vnode *child;
+    retval = parent->v_ops->mknod(parent, &child, basename, dev);
     
     free(path);
     return retval;

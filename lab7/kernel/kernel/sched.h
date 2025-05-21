@@ -42,7 +42,7 @@ typedef struct sched_task {
     struct list_head vm_area_queue;         // List head to link all `vm_area_t`s
     
     fs_vnode_t *cwd;                        // Current working directory
-    fs_file_t *fdtable[FS_NUM_FD];          // File descriptor table
+    fs_file_t *fdtable[FS_NUM_FDTABLE];     // File descriptor table
 	
     struct list_head list;					// List node to link all tasks
 } sched_task_t;

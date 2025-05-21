@@ -4,6 +4,7 @@
 #include "utils.h"
 #include "errno.h"
 #include "slab.h"
+#include "device.h"
 #include <stddef.h>
 
 struct tmpfs_inode;
@@ -16,13 +17,18 @@ typedef struct tmpfs_dentry {
 
 typedef enum {
     INODE_TYPE_FILE,
-    INODE_TYPE_DIRECTORY
+    INODE_TYPE_DIRECTORY,
+    INODE_TYPE_DEV,
 } tmpfs_inode_type_t;
 
 typedef struct tmpfs_inode {
     tmpfs_inode_type_t type;
     struct vnode *vnptr;                    // Point to the vnode which points to this struct
     union {
+        // INODE_TYPE_DEV
+        struct {
+            dev_t dev;                      // The device number which can be used as device ID
+        } tn_dev;
         // INODE_TYPE_DIRECTORY
         struct {
             struct list_head subdirs;       // List head of subdirs (children)
@@ -43,7 +49,8 @@ typedef struct tmpfs_inode {
 static struct vnode_operations tmpfs_vops = {
     .lookup = tmpfs_lookup,
     .create = tmpfs_create,
-    .mkdir = tmpfs_mkdir
+    .mkdir = tmpfs_mkdir,
+    .mknod = tmpfs_mknod,
 };
 
 int tmpfs_setup_mount(struct filesystem *fs, struct mount *mount) {
@@ -87,6 +94,8 @@ static tmpfs_dentry_t* tmpfs_create_dentry(tmpfs_inode_t *parent_inode, const ch
         new_in->tn_content.tn_dir.parent = parent_inode;
     } else if (type == INODE_TYPE_FILE) {
         new_in->tn_content.tn_file.filesize = 0;
+    } else if (type == INODE_TYPE_DEV) {
+        new_in->tn_content.tn_dev.dev = 0;
     }
     
     new_vn->v_ops = parent_inode->vnptr->v_ops;
@@ -154,6 +163,22 @@ int tmpfs_mkdir(struct vnode *dnode, struct vnode **target, const char *name) {
     return 0;
 }
 
+int tmpfs_mknod(struct vnode *dnode, struct vnode **target, const char *name, dev_t dev) {
+    if (strlen(name) > FS_MAX_COMPONENT_LEN) return -ENAMETOOLONG;
+    
+    tmpfs_inode_t *parent_inode = dnode->internal;
+    tmpfs_dentry_t *pos, *tmp;
+    list_for_each_entry_safe(pos, tmp, &parent_inode->tn_content.tn_dir.subdirs, sibling) {
+        if (strcmp(pos->name, name) == 0) return -EEXIST;
+    }
+
+    tmpfs_dentry_t *new_den = tmpfs_create_dentry(parent_inode, name, INODE_TYPE_DEV);
+    new_den->inode->tn_content.tn_dev.dev = dev;
+    *target = new_den->inode->vnptr;
+
+    return 0;
+}
+
 /* file ops */
 
 int tmpfs_read(struct file *file, void *buf, size_t count) {
@@ -186,6 +211,10 @@ int tmpfs_write(struct file *file, const void *buf, size_t count) {
 int tmpfs_open(struct vnode *fvnode, struct file **target) {
     tmpfs_inode_t *finode = fvnode->internal;
     if (finode->type == INODE_TYPE_DIRECTORY) return -EISDIR;
+    else if (finode->type == INODE_TYPE_DEV) {
+        fvnode->f_ops = dev_get_driver(finode->tn_content.tn_dev.dev);
+        return fvnode->f_ops->open(fvnode, target);
+    }
 
     struct file *file = kmalloc(sizeof(struct file));
     file->vnode = fvnode;

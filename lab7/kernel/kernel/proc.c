@@ -7,6 +7,7 @@
 #include "utils.h"
 #include "slab.h"
 #include "vm.h"
+#include "vfs.h"
 #include "fs.h"
 #include <stdint.h>
 
@@ -43,7 +44,16 @@ void proc_setup_vma(sched_task_t *thrd, void *prog, size_t progsize) {
 }
 
 void proc_setup_fs(sched_task_t *thrd) {
-    thrd->cwd = fs_get_root()->root;
+    fs_vnode_t *root = fs_get_root()->root;
+    fs_file_t *stdin, *stdout, *stderr;
+    vfs_open(root, "/dev/uart", O_RDONLY, &stdin);
+    vfs_open(root, "/dev/uart", O_WRONLY, &stdout);
+    vfs_open(root, "/dev/uart", O_WRONLY, &stderr);
+    
+    thrd->cwd = root;
+    thrd->fdtable[0] = stdin;
+    thrd->fdtable[1] = stdout;
+    thrd->fdtable[2] = stderr;
 }
 
 void proc_release(sched_task_t *thrd) {
