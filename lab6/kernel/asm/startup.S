@@ -72,7 +72,8 @@ enable_mmu:
     ldr    x1, =( (MAIR_DEVICE_nGnRnE << (MAIR_IDX_DEVICE_nGnRnE * 8)) | (MAIR_NORMAL_NOCACHE << (MAIR_IDX_NORMAL_NOCACHE * 8)) )
     msr    mair_el1, x1
 
-    ldr    x2, =_pa_stack_end      // Copy the end of the stack into a general purpose register first
+    adrp   x2, _stack_end            // Calculate the page address of _stack_end and store in x2
+    add    x2, x2, :lo12:_stack_end  // Add the offset within that page to get the exact address of _stack_end
     mov    sp, x2
     stp    x0, x30, [sp, #-16]!    // Push DTB address and lr into stack
     bl     mmu_init

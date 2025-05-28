@@ -29,7 +29,6 @@ SECTIONS {
         _stack_start = .;       /* Mark the start of the stack */
         . = . + 4M;             /* Allocate 4MB for the stack */
         _stack_end = .;         /* Mark the end of the stack */
-        _pa_stack_end = . - 0xffff000000000000;
     }
 
     _end = .;               /* Mark the end of the program's memory layout */
