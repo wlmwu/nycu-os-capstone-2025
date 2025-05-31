@@ -22,6 +22,7 @@ typedef enum {
 
 // Tag (ARM to VC)
 // https://github.com/raspberrypi/firmware/wiki/Mailbox-property-interface
+// https://github.com/BrianSidebotham/arm-tutorial-rpi/blob/master/part-5/armc-014/rpi-mailbox-interface.h
 typedef enum {
     /* Videocore */
     kTagGetFirmwareRevision = 0x1,
@@ -29,6 +30,14 @@ typedef enum {
     kTagGetBoardModel = 0x10001,
     kTagGetBoardRevision,
     kTagGetArmMemory = 0x10005,
+    /* Framebuffer */
+    kTagAllocateBuffer = 0x40001,
+    kTagSetPhysicalSize = 0x48003,
+    kTagSetVirtualSize = 0x48004,
+    kTagSetDepth = 0x48005,
+    kTagSetPixelOrder = 0x48006,
+    kTagGetPitch = 0x40008,
+    kTagSetVirtualOffset = 0x48009,
 } mbox_tag_id_t;
 
 // Request/Response Codes

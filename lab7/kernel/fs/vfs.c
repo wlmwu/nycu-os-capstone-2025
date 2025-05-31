@@ -88,6 +88,14 @@ int vfs_write(struct file *file, const void *buf, size_t count) {
     return file->f_ops->write(file, buf, count);
 }
 
+long vfs_lseek64(struct file *file, long offset, int whence) {
+    return file->f_ops->lseek64(file, offset, whence);
+}
+
+int vfs_ioctl(struct file *file, unsigned long cmd, void *arg) {
+    return file->f_ops->ioctl(file, cmd, arg);
+}
+
 int vfs_mkdir(struct vnode *start, const char *pathname) {
     char *path = strdup(pathname);
     if (path[strlen(path) - 1] == '/') path[strlen(path) - 1] = '\0';

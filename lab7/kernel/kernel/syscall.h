@@ -21,8 +21,10 @@
 #define SYS_MKDIR       15
 #define SYS_MOUNT       16
 #define SYS_CHDIR       17
-#define SYS_SIGRETURN   18
-#define SYS_YIELD       19       // To call schedule() in EL0
+#define SYS_LSEEK       18
+#define SYS_IOCTL       19
+#define SYS_SIGRETURN   20
+#define SYS_YIELD       21       // To call schedule() in EL0
 
 int syscall_handle(trapframe_t *tf);
 

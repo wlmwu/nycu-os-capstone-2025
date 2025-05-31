@@ -55,6 +55,8 @@ int vfs_open(fs_vnode_t *start, const char *pathname, int flags, fs_file_t **tar
 int vfs_close(fs_file_t *file);
 int vfs_read(fs_file_t *file, void *buf, size_t count);
 int vfs_write(fs_file_t *file, const void *buf, size_t count);
+long vfs_lseek64(fs_file_t *file, long offset, int whence);
+int vfs_ioctl(fs_file_t *file, unsigned long cmd, void *arg);
 int vfs_lookup(fs_vnode_t *start, const char *pathname, fs_vnode_t **target);
 int vfs_mkdir(fs_vnode_t *start, const char *pathname);
 int vfs_mknod(fs_vnode_t *start, const char *pathname, dev_t dev);

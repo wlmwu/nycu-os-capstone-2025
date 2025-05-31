@@ -274,6 +274,30 @@ static int sys_chdir(trapframe_t *tf) {
     return retval;
 }
 
+static int sys_lseek(trapframe_t *tf) {
+    sched_task_t *curr = sched_get_current();
+    int fd = tf->x[0];
+    long offset = tf->x[1];
+    int whence = tf->x[2];
+    if (fd < 0 || fd >= FS_NUM_FDTABLE || !curr->fdtable[fd]) return -EBADF;
+
+    fs_file_t *file = curr->fdtable[fd];
+    int retval = vfs_lseek64(file, offset, whence);
+    return retval;
+}
+
+static int sys_ioctl(trapframe_t *tf) {
+    sched_task_t *curr = sched_get_current();
+    int fd = tf->x[0];
+    unsigned long cmd = tf->x[1];
+    void *arg = (void*)(tf->x[2]);
+    if (fd < 0 || fd >= FS_NUM_FDTABLE || !curr->fdtable[fd]) return -EBADF;
+
+    fs_file_t *file = curr->fdtable[fd];
+    int retval = vfs_ioctl(file, cmd, arg);
+    return retval;
+}
+
 
 static int (*syscalls[])(trapframe_t *tf) = {
     [SYS_GETPID]    sys_getpid,
@@ -296,6 +320,8 @@ static int (*syscalls[])(trapframe_t *tf) = {
     [SYS_MKDIR]     sys_mkdir,
     [SYS_MOUNT]     sys_mount,
     [SYS_CHDIR]     sys_chdir,
+    [SYS_LSEEK]     sys_lseek,
+    [SYS_IOCTL]     sys_ioctl,
 };
 
 int syscall_handle(trapframe_t *tf) {

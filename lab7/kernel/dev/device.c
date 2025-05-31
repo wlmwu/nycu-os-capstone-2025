@@ -4,6 +4,7 @@
 #include "slab.h"
 #include "utils.h"
 #include "uart.h"
+#include "framebuffer.h"
 #include <stdint.h>
 
 #define NUM_DEV_MAX 16
@@ -19,6 +20,7 @@ void dev_init() {
     memset(drivers, 0, sizeof(drivers));
     vfs_mkdir(fs_get_root()->root, "/dev");
     dev_uart_init();
+    dev_fbuf_init();
 }
 
 int dev_register(dev_t dev, struct file_operations *fops) {

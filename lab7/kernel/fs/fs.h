@@ -64,6 +64,21 @@ struct file_operations {
      * @return The new file offset in bytes from the beginning of the file, or -1 on failure.
      */
     long (*lseek64)(struct file *file, long offset, int whence);
+    /**
+     * @brief Performs device-specific I/O control operations on an open file.
+     *
+     * This function allows user-space applications to send commands and data
+     * to the underlying device driver for specialized operations that are
+     * not covered by standard read/write operations.
+     *
+     * @param file Pointer to the file structure representing the open file.
+     * @param cmd The command code to be executed. These commands are typically
+     * defined by the device driver.
+     * @param arg An optional argument, typically a pointer to a data structure
+     * or an integer value, whose meaning depends on the `cmd`.
+     * @return 0 on success, or a negative error code on failure.
+     */
+    int (*ioctl)(struct file *file, unsigned long cmd, void *arg);
 };
 
 struct file {
@@ -90,5 +105,11 @@ struct filesystem* fs_get_filesystem(const char *fs_name);
 void fs_init();
 
 fs_mount_t* fs_get_root();
+
+// https://github.com/torvalds/linux/blob/master/include/uapi/linux/fs.h
+ 
+#define SEEK_SET	0	/* seek relative to beginning of file */
+#define SEEK_CUR	1	/* seek relative to current file position */
+#define SEEK_END	2	/* seek relative to end of file */
 
 #endif // FS_H_
