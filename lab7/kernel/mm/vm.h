@@ -11,7 +11,7 @@ typedef struct vm_area {
     uint64_t start;             // VM Area: [start, end)
     uint64_t end;
     uint64_t prot;              // Protection flags
-    uint64_t file;              // File mapped to (or say physical start address mapped to)
+    uint64_t file;              // File mapped to (`struct file*`)
     struct list_head list;      // List node to link all VMAs
 } vm_area_t;
 

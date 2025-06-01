@@ -6,6 +6,7 @@
 #define PROC_STACK_SIZE     (PAGE_SIZE * 4)    
 #define PROC_USTACK_BASE    0xffffffffb000    
 #define PROC_ENTRY_POINT    0x0 
+#define PROC_NUM_FDTABLE    16
 
 // Attributes used in video player, QEMU: 0x3Cxxxxxx, RPi: 0x3Exxxxxx 
 #define PROC_FRAMEBUF_PTR    0x3c100000      // FrameBufferInfo.pointer
@@ -13,6 +14,7 @@
 
 #include "sched.h"
 #include <stdint.h>
+#include <stddef.h>
 
 int proc_load_prog(char *filename, void **prog, size_t *progsize);
 

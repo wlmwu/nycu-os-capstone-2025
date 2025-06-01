@@ -1,10 +1,13 @@
 #ifndef SCHED_H_
 #define SCHED_H_
 
+typedef struct sched_task sched_task_t;
+
 #include "list.h"
 #include "signal.h"
 #include "exception.h"
 #include "fs.h"
+#include "proc.h"
 #include <stdint.h>
 #include <stddef.h>
 
@@ -26,7 +29,7 @@ struct sched_context {
 
 typedef void (*sched_fn_t)(void *args);
 
-typedef struct sched_task {
+struct sched_task {
     struct sched_context context;			// Saved CPU context for context switch
     enum { kThRunnable, kThDead } state;	// Current state
     void *kstack;                           // Kernel stack bottom
@@ -42,10 +45,10 @@ typedef struct sched_task {
     struct list_head vm_area_queue;         // List head to link all `vm_area_t`s
     
     fs_vnode_t *cwd;                        // Current working directory
-    fs_file_t *fdtable[FS_NUM_FDTABLE];     // File descriptor table
+    fs_file_t *fdtable[PROC_NUM_FDTABLE];   // File descriptor table
 	
     struct list_head list;					// List node to link all tasks
-} sched_task_t;
+};
 
 void schedule();
 void sched_enqueue_task(sched_task_t *thread);

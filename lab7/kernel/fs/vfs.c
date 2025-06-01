@@ -174,4 +174,7 @@ int vfs_mount(struct vnode *start, const char *target, const char *filesystem) {
     return 0;
 }
 
+int vfs_getattr(struct vnode *vnode, struct vnode_attr *attr) {
+    return vnode->v_ops->getattr(vnode, attr);
+}
 

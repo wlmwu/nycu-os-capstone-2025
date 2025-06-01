@@ -9,21 +9,27 @@
 #include "vm.h"
 #include "vfs.h"
 #include "fs.h"
+#include "errno.h"
 #include <stdint.h>
 
 int proc_load_prog(char *filename, void **prog, size_t *progsize) {
     if (!filename || !prog || !progsize) {
         uart_printf("Error: Arguments should not be NULL\n");
-        return -1;
+        return -EINVAL;
     }
-
-    cpio_newc_header_t *hptr = cpio_get_file_by_name(filename);
-    if (!hptr) {
-        uart_printf("%s: No such file or directory\n", filename);
-        return -1;
+    fs_file_t *file;
+    int retval = vfs_open(fs_get_root()->root, filename, O_RDONLY, &file);
+    if (retval < 0) {
+        if (retval == -ENOENT) uart_printf("%s: No such file or directory\n", filename);
+        return retval;
     }
+    
+    fs_vattr_t attr;
+    retval = vfs_getattr(file->vnode, &attr);
+    if (retval < 0) return retval;
 
-    cpio_get_file(hptr, NULL, (unsigned int*)progsize, (char**)prog);
+    *prog = (void*)file;
+    *progsize = attr.size;
 
     return 0;
 }
@@ -38,9 +44,8 @@ sched_task_t* proc_create(void *prog, void *args, size_t progsize) {
 }
 
 void proc_setup_vma(sched_task_t *thrd, void *prog, size_t progsize) {
-    vma_add(thrd, PROC_ENTRY_POINT, PROC_ENTRY_POINT + progsize, PROT_READ | PROT_WRITE | PROT_EXEC, VA_TO_PA(prog));   // Require designated virtual address mapping only
+    vma_add(thrd, PROC_ENTRY_POINT, PROC_ENTRY_POINT + progsize, PROT_READ | PROT_WRITE | PROT_EXEC, (uint64_t)prog);
     vma_add(thrd, PROC_USTACK_BASE, PROC_USTACK_BASE + PROC_STACK_SIZE, PROT_READ | PROT_WRITE | PROT_EXEC, 0);
-    vm_map_pages(thrd, PROC_FRAMEBUF_PTR, PROC_FRAMEBUF_PTR, PROC_FRAMEBUF_SIZE, PROT_READ | PROT_WRITE | PROT_EXEC);   // Require designated physical address mapping
 }
 
 void proc_setup_fs(sched_task_t *thrd) {
@@ -58,6 +63,11 @@ void proc_setup_fs(sched_task_t *thrd) {
 
 void proc_release(sched_task_t *thrd) {
     vm_release(thrd);
+    for (int fd = 0; fd < PROC_NUM_FDTABLE; ++fd) {
+        if (thrd->fdtable[fd]) {
+            vfs_close(thrd->fdtable[fd]);
+        }
+    }
     kfree(thrd->kstack);
     kfree((void*)PA_TO_VA(thrd->pgd));
     kfree(thrd);

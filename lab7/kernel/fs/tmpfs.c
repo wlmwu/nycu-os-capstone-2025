@@ -188,7 +188,7 @@ int tmpfs_read(struct file *file, void *buf, size_t count) {
     int64_t len = MIN((int)count, (int)(finode->tn_content.tn_file.filesize - file->f_pos));
     if (len <= 0) return 0;
 
-    memcpy(buf, finode->tn_content.tn_file.data, len);
+    memcpy(buf, finode->tn_content.tn_file.data + file->f_pos, len);
     file->f_pos += len;
 
     return len;

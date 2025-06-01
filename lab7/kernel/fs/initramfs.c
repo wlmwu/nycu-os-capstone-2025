@@ -71,6 +71,16 @@ static int initramfs_mkdir(fs_vnode_t *dnode, fs_vnode_t **target, const char *n
     return -EROFS;
 }
 
+static int initramfs_getattr(fs_vnode_t *vnode, fs_vattr_t *attr) {
+    initramfs_inode_t *inode = vnode->internal;
+    if (inode->type == INODE_TYPE_FILE) {
+        attr->size = inode->tn_content.tn_file.filesize;
+    } else if (inode->type == INODE_TYPE_DIRECTORY) {
+        attr->size = inode->tn_content.tn_dir.num_entries;
+    }
+    return 0;
+}
+
 
 static int initramfs_read(fs_file_t *file, void *buf, size_t count) {
     initramfs_inode_t *finode = file->vnode->internal;
@@ -79,7 +89,7 @@ static int initramfs_read(fs_file_t *file, void *buf, size_t count) {
     int64_t len = MIN((int)count, (int)(finode->tn_content.tn_file.filesize - file->f_pos));
     if (len <= 0) return 0;
 
-    memcpy(buf, finode->tn_content.tn_file.data, len);
+    memcpy(buf, finode->tn_content.tn_file.data + file->f_pos, len);
     file->f_pos += len;
 
     return len;
@@ -111,14 +121,19 @@ static int initramfs_close(fs_file_t *file) {
 }
 
 static long initramfs_lseek64(fs_file_t *file, long offset, int whence) {
-    return -ENOSYS;
+    if (whence == SEEK_SET) {
+        file->f_pos = offset;
+        return offset;
+    }
+    return -EINVAL;
 }
 
 
 static struct vnode_operations initramfs_vops = {
     .lookup = initramfs_lookup,
     .create = initramfs_create,
-    .mkdir = initramfs_mkdir
+    .mkdir = initramfs_mkdir,
+    .getattr = initramfs_getattr,
 };
 
 static struct file_operations iniramfs_fops = {

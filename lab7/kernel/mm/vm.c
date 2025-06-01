@@ -4,6 +4,8 @@
 #include "mini_uart.h"
 #include "proc.h"
 #include "slab.h"
+#include "fs.h"
+#include "vfs.h"
 #include "list.h"
 #include <stdbool.h>
 
@@ -127,8 +129,8 @@ int vm_fault_handle(uint64_t va, esr_el1_t esr) {
             uint64_t page = (uint64_t)page_alloc(0);
             if (vma->file) {
                 uint64_t offset = (va - vma->start) & PAGE_MASK;
-                uint64_t addr = vma->file + offset;
-                memcpy((void*)PA_TO_VA(page), (void*)PA_TO_VA(addr), PAGE_SIZE);
+                vfs_lseek64((fs_file_t*)vma->file, offset, SEEK_SET);
+                vfs_read((fs_file_t*)vma->file, (void*)PA_TO_VA(page), PAGE_SIZE);
             }
             
             uint64_t pte_flags = prot_to_flag(vma->prot);

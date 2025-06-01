@@ -75,7 +75,6 @@ static int sys_fork(trapframe_t *tf) {
     int32_t kstack_offset = (int32_t)child->kstack - (int32_t)parent->kstack;
     memcpy(child->kstack, parent->kstack, PROC_STACK_SIZE);
     vm_copy(child, parent);
-    vm_map_pages(child, PROC_FRAMEBUF_PTR, PROC_FRAMEBUF_PTR, PROC_FRAMEBUF_SIZE, PROT_READ | PROT_WRITE | PROT_EXEC);      // Require designated physical address mapping
     proc_setup_fs(child);
 
     uintptr_t sp, fp;
@@ -194,7 +193,7 @@ static int sys_open(trapframe_t *tf) {
     int retval = vfs_open(curr->cwd, pathname, flags, &file);
     if (retval != 0) return retval;
 
-    for (int fd = 0; fd < FS_NUM_FDTABLE; ++fd) {
+    for (int fd = 0; fd < PROC_NUM_FDTABLE; ++fd) {
         if (!curr->fdtable[fd]) {
             curr->fdtable[fd] = file;
             return fd;
@@ -207,7 +206,7 @@ static int sys_open(trapframe_t *tf) {
 static int sys_close(trapframe_t *tf) {
     sched_task_t *curr = sched_get_current();
     int fd = tf->x[0];
-    if (fd < 0 || fd >= FS_NUM_FDTABLE || !curr->fdtable[fd]) return -EBADF;
+    if (fd < 0 || fd >= PROC_NUM_FDTABLE || !curr->fdtable[fd]) return -EBADF;
 
     fs_file_t *file = curr->fdtable[fd];
     int retval = vfs_close(file);
@@ -221,7 +220,7 @@ static int sys_write(trapframe_t *tf) {
     int fd = tf->x[0];
     void *buf = (void*)(tf->x[1]);
     size_t count = tf->x[2];
-    if (fd < 0 || fd >= FS_NUM_FDTABLE || !curr->fdtable[fd]) return -EBADF;
+    if (fd < 0 || fd >= PROC_NUM_FDTABLE || !curr->fdtable[fd]) return -EBADF;
 
     fs_file_t *file = curr->fdtable[fd];
     int retval = vfs_write(file, buf, count);
@@ -234,7 +233,7 @@ static int sys_read(trapframe_t *tf) {
     int fd = tf->x[0];
     void *buf = (void*)(tf->x[1]);
     size_t count = tf->x[2];
-    if (fd < 0 || fd >= FS_NUM_FDTABLE || !curr->fdtable[fd]) return -EBADF;
+    if (fd < 0 || fd >= PROC_NUM_FDTABLE || !curr->fdtable[fd]) return -EBADF;
 
     fs_file_t *file = curr->fdtable[fd];
     int retval = vfs_read(file, buf, count);
@@ -279,7 +278,7 @@ static int sys_lseek(trapframe_t *tf) {
     int fd = tf->x[0];
     long offset = tf->x[1];
     int whence = tf->x[2];
-    if (fd < 0 || fd >= FS_NUM_FDTABLE || !curr->fdtable[fd]) return -EBADF;
+    if (fd < 0 || fd >= PROC_NUM_FDTABLE || !curr->fdtable[fd]) return -EBADF;
 
     fs_file_t *file = curr->fdtable[fd];
     int retval = vfs_lseek64(file, offset, whence);
@@ -291,7 +290,7 @@ static int sys_ioctl(trapframe_t *tf) {
     int fd = tf->x[0];
     unsigned long cmd = tf->x[1];
     void *arg = (void*)(tf->x[2]);
-    if (fd < 0 || fd >= FS_NUM_FDTABLE || !curr->fdtable[fd]) return -EBADF;
+    if (fd < 0 || fd >= PROC_NUM_FDTABLE || !curr->fdtable[fd]) return -EBADF;
 
     fs_file_t *file = curr->fdtable[fd];
     int retval = vfs_ioctl(file, cmd, arg);

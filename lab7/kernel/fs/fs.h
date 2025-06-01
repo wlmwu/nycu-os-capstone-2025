@@ -7,11 +7,11 @@
 #define FS_MAX_FILE_SIZE        4096
 #define FS_MAX_COMPONENT_LEN    31
 #define FS_MAX_NUM_ENTRY        16
-#define FS_NUM_FDTABLE          16
 
 // Defined in vfs.h
 typedef struct vnode fs_vnode_t;
 struct vnode_operations;
+typedef struct vnode_attr fs_vattr_t;
 
 typedef struct mount fs_mount_t;
 typedef struct file fs_file_t;
