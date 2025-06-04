@@ -1,4 +1,4 @@
-# Lab 6: Virtual Memory
+# Lab 7: Virtual File System
 
 Here implements a bootloader and a kernel. The bootloader is a kernel that loads the real kernel image, and the kernel performs essential system operations to get the device running. Additionally, a Python tool is provided for transferring the kernel image to the bootloader via UART.
 
@@ -28,6 +28,7 @@ While the repository might show a limited number of files, the actual `initramfs
 - `forktest.img`:  A user program created by `users/user2`.
 - `syscall.img`: A user program provided by the lab 5.
 - `vm.img`: A user program provided by the lab 6.
+- `vfs1.img`: A user program provided by the lab 7.
 
 ## User Program
 This directory now contains multiple user programs designed to test different kernel functionalities:
