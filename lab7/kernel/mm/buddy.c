@@ -2,6 +2,7 @@
 #include "list.h"
 #include "utils.h"
 #include "mmu.h"
+#include "irq.h"
 #include <stdint.h>
 #include <stddef.h>
 
@@ -130,6 +131,7 @@ void buddy_init() {
 }
 
 void *page_alloc(int order) {
+    irq_disable();
     if (order < 0 || order >= MAX_ORDER) {
         return NULL;
     }
@@ -164,10 +166,12 @@ void *page_alloc(int order) {
 
     // uart_printf("\033[0;33m[Page]\tAllocate %p at order %d, page %d. Next address at order %u: %p\033[0m\n", block, current_order, block_pfn, current_order, free_lists[current_order].next);
 
+    irq_enable();
     return (void*)VA_TO_PA(block);
 }
 
 void page_free(void *addr) {    
+    irq_disable();
     unsigned long block_pfn = addr_to_pfn((void*)PA_TO_VA(addr));
     if (block_pfn <  0 && block_pfn >= MAX_PAGES) return;
 
@@ -190,6 +194,7 @@ void page_free(void *addr) {
     
     // uart_printf("\033[0;33m[Page]\tFree %p and add back to order %d, page %d. Next address at order %u: %p\033[0m\n", addr, order, block_pfn, order, free_lists[order].next);
 
+    irq_enable();
 }
 
 uint32_t page_refcount_update(uint64_t pa, int8_t increment) {
@@ -202,7 +207,9 @@ uint32_t page_refcount_update(uint64_t pa, int8_t increment) {
     if (increment > 0) {
         ++page_refcounts[block_pfn];
     } else if (increment < 0) {
+        irq_disable();
         --page_refcounts[block_pfn];      
+        irq_enable();
         if (page_refcounts[block_pfn] == 0) {
             page_free((void*)pa);
         }

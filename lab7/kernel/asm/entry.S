@@ -66,6 +66,7 @@
         save_all
         mov	x0, sp
         bl el\el\ht\()_\regsize\()_\label\()_handler
+        bl irq_disable                                  // Disable IRQs to prevent child process from getting stuck near eret
         load_all
         eret
     .endm

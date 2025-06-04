@@ -6,6 +6,7 @@
 #include "slab.h"
 #include "fs.h"
 #include "vfs.h"
+#include "irq.h"
 #include "list.h"
 #include <stdbool.h>
 
@@ -129,8 +130,10 @@ int vm_fault_handle(uint64_t va, esr_el1_t esr) {
             uint64_t page = (uint64_t)page_alloc(0);
             if (vma->file) {
                 uint64_t offset = (va - vma->start) & PAGE_MASK;
+                irq_disable();
                 vfs_lseek64((fs_file_t*)vma->file, offset, SEEK_SET);
                 vfs_read((fs_file_t*)vma->file, (void*)PA_TO_VA(page), PAGE_SIZE);
+                irq_enable();
             }
             
             uint64_t pte_flags = prot_to_flag(vma->prot);
@@ -234,7 +237,10 @@ static void free_tables(uint64_t table, uint64_t level) {
 void vm_release(sched_task_t *thrd) {
     // Free VMAs
     while (thrd->vm_area_queue.next != &thrd->vm_area_queue) {
-        list_del(thrd->vm_area_queue.next);
+        vm_area_t *vma = list_entry(thrd->vm_area_queue.next, vm_area_t, list);
+        list_del(&vma->list);
+        // if (vma->file) vfs_close((fs_file_t*)vma->file);     // Child use the same file for the program.
+        kfree(vma);
     }
     INIT_LIST_HEAD(&thrd->vm_area_queue);
 

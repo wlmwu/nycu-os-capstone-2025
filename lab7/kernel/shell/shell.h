@@ -32,9 +32,9 @@ static const shell_cmd_t kCmds[NUM_CMD] = {
     {.command = "hello", .help = "Print \"Hello World!\"", .func = command_hello},
     {.command = "info", .help = "Get device information", .func = command_info},
     {.command = "reboot", .help = "Reboot the device", .func = command_reboot},
-    {.command = "ls", .help = "List files in the root directory", .func = command_ls},
-    {.command = "cat", .help = "Display file contents", .func = command_cat},
-    {.command = "exec", .help = "Execute a user program", .func = command_exec},
+    {.command = "ls", .help = "List files in the CPIO archive", .func = command_ls},
+    {.command = "cat", .help = "Display contents of files in the CPIO archive", .func = command_cat},
+    {.command = "exec", .help = "Execute a user program via VFS (e.g., /initramfs/program.img)", .func = command_exec},
     {.command = "echoat", .help = "Print a message after a delay", .func = command_echoat},
 };
 

@@ -25,7 +25,7 @@ void el1h_64_sync_handler(trapframe_t *tf) {
         uint64_t far = READ_SYSREG(far_el1);
         retval = vm_fault_handle(far, esr);
     } else {
-        uart_dbg_printf("\033[0;31mEL1h: Unhandled exceptioin class %x, ESR_EL1: %x, Thread: %p\033[0m\t", esr.ec, esr.value, sched_get_current());
+        uart_dbg_printf("\033[0;31mEL1h: Unhandled exceptioin class %x, ESR_EL1: %x, FAR_EL1: %p, Thread: %p\033[0m\t", esr.ec, esr.value, READ_SYSREG(far_el1), sched_get_current());
     }
     
     if (retval < 0) sched_get_current()->sigpending |= SIGKILL;
@@ -51,7 +51,7 @@ void el0t_64_sync_handler(trapframe_t *tf) {
         uint64_t far = READ_SYSREG(far_el1);
         retval = vm_fault_handle(far, esr);
     } else {
-        uart_dbg_printf("\033[0;31mError: Unhandled exceptioin class %x, ESR_EL1: %x, Thread: %p\033[0m\n", esr.ec, esr.value, sched_get_current());
+        uart_dbg_printf("\033[0;31mError: Unhandled exceptioin class %x, ESR_EL1: %x, FAR_EL1: %p, Thread: %p\033[0m\n", esr.ec, esr.value, READ_SYSREG(far_el1), sched_get_current());
     }
     if (retval < 0) sched_get_current()->sigpending |= SIGKILL;
     signal_check(tf);
