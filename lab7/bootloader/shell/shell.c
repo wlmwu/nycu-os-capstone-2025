@@ -73,5 +73,5 @@ void command_reboot() {
 }
 
 void command_bootloader() {
-    bootloader_run();
+    bootloader_load();
 }
