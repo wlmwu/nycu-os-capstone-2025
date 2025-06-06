@@ -1,7 +1,6 @@
 #include "bootloader.h"
 #include "mini_uart.h"
 #include "fdt.h"
-#include "utils.h"
 
 extern fdt_header_t *g_fdt_header_start;
 
@@ -14,11 +13,7 @@ void bootloader_load() {
     kernel_size = uart_getu();
     checksum = uart_getu();
 
-    char ssize[33];     /* 4 bytes + '\0' */
-    itos(ssize, kernel_size, 10);
-    uart_puts("Kernel size received: ");
-    uart_puts(ssize);
-    uart_puts(" bytes\n");
+    uart_printf("Kernel size received: %u bytes\n", kernel_size);
 
     uart_puts("Receiving kernel image...\n");
 
@@ -34,7 +29,7 @@ void bootloader_load() {
     }
 
     if (sum != checksum) {
-        uart_puts("Error: Checksum mismatch!\n");
+        uart_printf("Error: Checksum mismatch! Calculated: %x, Expected: %x\n", sum, checksum);
         return;
     }
 

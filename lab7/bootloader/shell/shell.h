@@ -1,9 +1,8 @@
 #ifndef SHELL_H_
 #define SHELL_H_
 
-#include "mini_uart.h"
-#include "utils.h"
 #include "bootloader.h"
+#include <stdint.h>
 
 #define NUM_CMD 3
 #define LEN_CMD_NAME_MAX 16
