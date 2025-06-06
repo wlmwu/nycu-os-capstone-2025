@@ -25,27 +25,6 @@ void *memset (void *dest, int val, size_t len);
 */
 int strcmp(const char *str1, const char *str2);
 
-size_t strlen(const char *str);
-
-/*
- * @param ptr   - Pointer to the memory block to be filled.
- * @param value - Value to be set. Only the least significant byte is used.
- * @param num   - Number of bytes to set to the specified value.
- * 
- * @return void This function does not return any value.
-*/
-void arrset(void *ptr, int value, unsigned int num);
-
-/*
- * @param output A pointer to a character array where the hexadecimal string will be stored.
- *               The array should be large enough to store 8 characters and the null terminator.
- * @param d The unsigned integer to be converted to a hexadecimal string.
- * 
- * @return void This function does not return a value, it directly modifies the `output` array.
-*/
-void uint2hexstr(char *output, unsigned int d);
-#define LEN_U32_HEX_STR 11
-
 /**
  * Converts an unsigned long integer to a string in the specified base.
  * 
@@ -57,9 +36,5 @@ void uint2hexstr(char *output, unsigned int d);
  *         The buffer is overwritten on each call, so its contents should be used immediately.
  */
 char* itos(unsigned long value, int base);
-
-#define ALIGN(val, align_len) (((val) + (align_len) - 1) / (align_len) * (align_len))
-
-uint32_t bswap32(uint32_t value);
 
 #endif // UTILS_H_

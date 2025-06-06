@@ -1,8 +1,8 @@
 #include "bootloader.h"
 #include "mini_uart.h"
-#include "fdt.h"
+#include <stdint.h>
 
-extern fdt_header_t *g_fdt_header_start;
+extern void *g_fdt_header;
 
 void bootloader_load() {
     uart_puts("Waiting for kernel image...\n");
@@ -36,5 +36,5 @@ void bootloader_load() {
     uart_puts("Kernel loaded successfully!\n");
 
     // Jump to the kernel
-    ((void (*)()) kernel)((void*)g_fdt_header_start);
+    ((void (*)()) kernel)((void*)g_fdt_header);
 }
