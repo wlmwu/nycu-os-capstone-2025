@@ -1,4 +1,8 @@
 #include "shell.h"
+#include "mini_uart.h"
+#include "bootloader.h"
+#include "power.h"
+#include "utils.h"
 
 void shell_init() {
     uart_puts(kWelcomeMsg);
@@ -10,7 +14,7 @@ void shell_init() {
 void shell_run() {
     char buf[NUM_CMD_RECV_MAX];
     while (1) {
-        arrset(buf, 0, NUM_CMD_RECV_MAX);
+        memset(buf, 0, NUM_CMD_RECV_MAX);
         uart_puts("# ");
         shell_cmd_read(buf);
         shell_cmd_parse(buf);
@@ -69,9 +73,10 @@ void command_help() {
 }
 
 void command_reboot() {
-    reset(NUM_TICKS);
+    const int kNumTicks = 100;
+    power_reset(kNumTicks);
 }
 
 void command_bootloader() {
-    bootloader_run();
+    bootloader_load();
 }

@@ -1,9 +1,8 @@
 #ifndef SHELL_H_
 #define SHELL_H_
 
-#include "mini_uart.h"
-#include "utils.h"
 #include "bootloader.h"
+#include <stdint.h>
 
 #define NUM_CMD 3
 #define LEN_CMD_NAME_MAX 16
@@ -25,9 +24,9 @@ void command_reboot(void);
 void command_bootloader(void);
 
 static const shell_cmd_t kCmds[NUM_CMD] = {
-    {.command = "help", .help = "Print all available commands", .func = command_help},
-    {.command = "load", .help = "Get device information", .func = command_bootloader},
-    {.command = "reboot", .help = "Reboot the device", .func = command_reboot},
+    {.command = "help", .help = "Print all available commands", .func = (void*)((uintptr_t)(command_help) + (BOOTLOADER_LOAD_ADDR - KERNEL_LOAD_ADDR))},
+    {.command = "load", .help = "Get device information", .func = (void*)((uintptr_t)(command_bootloader) + (BOOTLOADER_LOAD_ADDR - KERNEL_LOAD_ADDR))},
+    {.command = "reboot", .help = "Reboot the device", .func = (void*)((uintptr_t)(command_reboot) + (BOOTLOADER_LOAD_ADDR - KERNEL_LOAD_ADDR))},
 };
 
 void shell_init();

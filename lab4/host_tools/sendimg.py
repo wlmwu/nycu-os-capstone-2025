@@ -2,21 +2,35 @@ from serial import Serial
 import struct
 import argparse
 import time
+from tqdm import tqdm
 
 def send_kernel_image(serial_port, kernel_path, baudrate):
+    get_checksum = lambda data: sum(data) & 0xffffffff
     with Serial(serial_port, baudrate) as ser:
         try:
             with open(kernel_path, 'rb') as kernel_file:
                 kernel_data = kernel_file.read()
                 kernel_size = len(kernel_data)
 
-                # Send the kernel size (4 bytes, little-endian unsigned int)
-                ser.write(struct.pack('<I', kernel_size))
+                # Send the kernel size and checksum (4 bytes, little-endian unsigned int)
+                ser.write(struct.pack('<II', 
+                                      kernel_size,
+                                      get_checksum(kernel_data)))
+                ser.flush()
                 print(f"Kernel image size: {kernel_size} bytes")
 
-                time.sleep(1)      # Pause to let the board print the message
+                time.sleep(1)      # Pause to let the board print messages
 
-                ser.write(kernel_data)
+                chunk_size = 1024 # bytes
+                with tqdm(total=kernel_size, unit='B', desc="Sending kernel") as pbar:
+                    bytes_sent = 0
+                    while bytes_sent < kernel_size:
+                        chunk = kernel_data[bytes_sent : bytes_sent + chunk_size]
+                        ser.write(chunk)
+                        ser.flush()
+                        bytes_sent += len(chunk)
+                        pbar.update(len(chunk))
+
                 print("Kernel image sent successfully.")
         
         except FileNotFoundError:

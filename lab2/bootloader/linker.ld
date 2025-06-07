@@ -24,7 +24,4 @@ SECTIONS {
     }
 
     _end = .;               /* Mark the end of the program's memory layout */
-    
-    /*_bootloader_load_addr = 0x100000;   /* Bootloader start address */
-    /*_kernel_load_addr = _start;       /* Kernel load address */
 }

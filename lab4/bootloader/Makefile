@@ -2,7 +2,7 @@ CROSS_COMPILE_TOOL = aarch64-none-elf
 CC = $(CROSS_COMPILE_TOOL)-gcc
 LD = $(CROSS_COMPILE_TOOL)-ld
 OBJCOPY = $(CROSS_COMPILE_TOOL)-objcopy
-CFLAGS = -mcpu=cortex-a53+nosimd -nostdlib -ffreestanding
+CFLAGS = -mcpu=cortex-a53+nosimd -nostdlib -ffreestanding -g
 LDFLAGS = -m aarch64elf -nostdlib -T linker.ld
 OUTPUT = kernel8.img
 ELF = kernel8.elf
@@ -24,7 +24,7 @@ all: clean $(OUTPUT)
 
 $(BUILD_DIR)/%.o: %.S
 	@mkdir -p $(@D)
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) $(INCLUDE_FLAGS) -c $< -o $@
 
 $(BUILD_DIR)/%.o: %.c
 	@mkdir -p $(@D)

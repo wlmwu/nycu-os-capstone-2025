@@ -14,5 +14,6 @@ unsigned int uart_getu();
 void uart_putc(const char c);
 void uart_puts(const char* str);
 
+void uart_printf(const char* format, ...);
 
 #endif // MINI_UART_H_
