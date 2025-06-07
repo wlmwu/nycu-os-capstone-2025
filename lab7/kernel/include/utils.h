@@ -205,16 +205,5 @@ uint32_t bswap32(uint32_t value);
 		     : : "rZ" (__val));				       \
 } while (0)
 
-/* Reboot */
-#define PM_PASSWORD 0x5a000000
-#define PM_RSTC 0x3F10001c
-#define PM_WDOG 0x3F100024
-
-#define NUM_TICKS 100
-
-void set(long addr, unsigned int value);
-void reset(int tick);
-void cancel_reset();
-
 
 #endif // UTILS_H_

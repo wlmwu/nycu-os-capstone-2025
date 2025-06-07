@@ -8,6 +8,7 @@
 #include "irq.h"
 #include "slab.h"
 #include "proc.h"
+#include "power.h"
 
 void shell_init() {
     uart_puts(kWelcomeMsg);
@@ -99,7 +100,8 @@ void command_info(int argc, char **argv) {
 }
 
 void command_reboot(int argc, char **argv) {
-    reset(NUM_TICKS);
+    const int kNumTicks = 100;
+    power_reset(kNumTicks);
 }
 
 void command_ls(int argc, char **argv) {
