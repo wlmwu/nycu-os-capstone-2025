@@ -18,7 +18,7 @@ int proc_load_prog(char *filename, void **prog, size_t *progsize) {
         return -EINVAL;
     }
     fs_file_t *file;
-    int retval = vfs_open(fs_get_root()->root, filename, O_RDONLY, &file);
+    int retval = vfs_open(fs_get_root(), filename, O_RDONLY, &file);
     if (retval < 0) {
         if (retval == -ENOENT) uart_printf("%s: No such file or directory\n", filename);
         return retval;
@@ -49,7 +49,7 @@ void proc_setup_vma(sched_task_t *thrd, void *prog, size_t progsize) {
 }
 
 void proc_setup_fs(sched_task_t *thrd) {
-    fs_vnode_t *root = fs_get_root()->root;
+    fs_vnode_t *root = fs_get_root();
     fs_file_t *stdin, *stdout, *stderr;
     vfs_open(root, "/dev/uart", O_RDONLY, &stdin);
     vfs_open(root, "/dev/uart", O_WRONLY, &stdout);

@@ -40,6 +40,6 @@ struct filesystem* fs_get_filesystem(const char *fs_name) {
     return NULL;
 }
 
-struct mount* fs_get_root() {
-    return rootfs;
+struct vnode* fs_get_root() {
+    return rootfs->root;
 }

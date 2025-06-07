@@ -128,5 +128,5 @@ static struct file_operations dev_fbuf_fops = {
 void dev_fbuf_init() {
     fbuf_init();
     dev_register(DEV_FRAMEBUFFER_DEV, &dev_fbuf_fops);
-    vfs_mknod(fs_get_root()->root, "/dev/framebuffer", DEV_FRAMEBUFFER_DEV);
+    vfs_mknod(fs_get_root(), "/dev/framebuffer", DEV_FRAMEBUFFER_DEV);
 }

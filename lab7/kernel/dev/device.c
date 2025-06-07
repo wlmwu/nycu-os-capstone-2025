@@ -18,7 +18,7 @@ static struct dev_driver *drivers[NUM_DEV_MAX];
 
 void dev_init() {
     memset(drivers, 0, sizeof(drivers));
-    vfs_mkdir(fs_get_root()->root, "/dev");
+    vfs_mkdir(fs_get_root(), "/dev");
     dev_uart_init();
     dev_fbuf_init();
 }

@@ -253,7 +253,7 @@ static struct filesystem initramfs_fs = {
 void initramfs_init() {
     fs_register(&initramfs_fs);
     fs_mount_t *initramfs_root = kmalloc(sizeof(fs_mount_t));
-    fs_vnode_t *root = fs_get_root()->root;
+    fs_vnode_t *root = fs_get_root();
 
     vfs_mkdir(root, "/initramfs/");    
     vfs_mount(root, "/initramfs/", "initramfs");

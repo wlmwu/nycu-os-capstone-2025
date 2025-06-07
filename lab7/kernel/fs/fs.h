@@ -89,9 +89,9 @@ struct file {
 };
 
 struct mount {
-  struct vnode *root;       // Mounted FS root vnode; its 'mount' points back here.
+  struct vnode *root;       // Mounted FS root vnode; its 'mount' points back here if there is no mount stacking on it
   struct filesystem *fs;
-  struct vnode *mntpoint;   // Vnode where this FS is mounted; its 'mount' points back here.
+  struct vnode *covered;    // Vnode where this FS is mounted on
 };
 
 struct filesystem {
@@ -104,7 +104,7 @@ struct filesystem* fs_get_filesystem(const char *fs_name);
 
 void fs_init();
 
-fs_mount_t* fs_get_root();
+fs_vnode_t* fs_get_root();
 
 // https://github.com/torvalds/linux/blob/master/include/uapi/linux/fs.h
  

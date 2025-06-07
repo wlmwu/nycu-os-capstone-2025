@@ -7,7 +7,7 @@
 #include "device.h"
 
 int vfs_lookup(struct vnode *start, const char *pathname, struct vnode **target) {
-    struct vnode *root = fs_get_root()->root;
+    struct vnode *root = fs_get_root();
     
     struct vnode *curr;
     char *path, *saveptr;
@@ -21,8 +21,8 @@ int vfs_lookup(struct vnode *start, const char *pathname, struct vnode **target)
 
     char *tok = strtok_r(path, "/", &saveptr);
     while (tok) {
-        if (strcmp(tok, "..") == 0 && curr->mount->root == curr) {   // `curr` is the root vnode of a mounted file system
-            curr = curr->mount->mntpoint;                            // Move `curr` to the mount point vnode
+        if (strcmp(tok, "..") == 0 && curr->mount && curr->mount->root == curr) {   // `curr` is the root vnode of a mounted file system
+            curr = curr->mount->covered;
         }
 
         struct vnode *next;
@@ -32,7 +32,7 @@ int vfs_lookup(struct vnode *start, const char *pathname, struct vnode **target)
             return retval;
         }
         curr = next;
-        if (curr->mount != NULL) {
+        while (curr->mount && curr->mount->root != curr) {
             curr = curr->mount->root;
         }
         tok = strtok_r(NULL, "/", &saveptr);
@@ -167,8 +167,11 @@ int vfs_mount(struct vnode *start, const char *target, const char *filesystem) {
         return retval;
     }
 
+    new_mount->covered = mount_point;
+    while (mount_point->mount && mount_point->mount->root != mount_point) {
+        mount_point = mount_point->mount->root;
+    }
     mount_point->mount = new_mount;
-    new_mount->mntpoint = mount_point;
     new_mount->root->mount = new_mount;
     
     return 0;

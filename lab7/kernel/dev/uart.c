@@ -43,5 +43,5 @@ static struct file_operations dev_uart_fops = {
 
 void dev_uart_init() {
     dev_register(DEV_UART_DEV, &dev_uart_fops);
-    vfs_mknod(fs_get_root()->root, "/dev/uart", DEV_UART_DEV);
+    vfs_mknod(fs_get_root(), "/dev/uart", DEV_UART_DEV);
 }

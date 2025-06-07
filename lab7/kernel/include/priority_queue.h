@@ -32,7 +32,12 @@ static inline bool pq_empty(priority_queue_t *pq) {
     return list_empty(&pq->head);
 }
 
-
 void pq_push(priority_queue_t *pq, void *data);
 void *pq_pop(priority_queue_t *pq);
 void *pq_top(priority_queue_t *pq);
+
+static inline void pq_free(priority_queue_t *pq) {
+    while (!pq_empty(pq)) {
+        pq_pop(pq);
+    }
+}
