@@ -144,19 +144,20 @@ void command_exec(int argc, char **argv) {
         uart_puts("Usage: exec <program.img>\n");
         return;
     }
-    irq_disable();
+    irq_lock_t lock;
+    irq_lock(&lock);
     char *filename = argv[1];
     void *prog = NULL;
     size_t progsize = 0;
     proc_load_prog(filename, &prog, &progsize);
     if (!prog) {
-        irq_enable();
+        irq_unlock(&lock);
         return;
     }
     proc_create(prog, NULL, progsize);
 
-    sched_start();     // Jump to thread queue
-    irq_enable();
+    sched_start();
+    irq_unlock(&lock);
 }
 
 static void echoat_timer_event(void *msg) {

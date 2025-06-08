@@ -47,22 +47,27 @@ void slab_init() {
 }
 
 void *kmalloc(size_t size) {
+    irq_lock_t lock;
+    irq_lock(&lock);
     int pool_idx = pool_find(size);
     if (pool_idx < 0) {                     // Allocate a block if size is too large
         int order = order_find(size);
+        irq_unlock(&lock);
         return (void*)PA_TO_VA(page_alloc(order));
     }
 
     if (list_empty(&pools[pool_idx])) {
         void *page = page_alloc(0);
-        if (!page) return NULL;
+        if (!page) {
+            irq_unlock(&lock);
+            return NULL;
+        }
         page = (void*)PA_TO_VA(page);
         
         slab_header_t *slab_header = page;
         slab_header->chunk_size =  MAX_CHUNK_SIZE >> (NUM_POOLS - pool_idx - 1);
         INIT_LIST_HEAD(&slab_header->free_list);
         slab_header->free_list_size = 0;
-        irq_disable();
         list_add_tail(&slab_header->list, &pools[pool_idx]);
 
         char *chunk_start = (char*)page + sizeof(slab_header_t);
@@ -72,10 +77,8 @@ void *kmalloc(size_t size) {
             list_add_tail(chunk, &slab_header->free_list);
             ++slab_header->free_list_size;
         }
-        irq_enable();
     }
 
-    irq_disable();
     slab_header_t *slab_header = list_entry(pools[pool_idx].next, slab_header_t, list);
     struct list_head *chunk = slab_header->free_list.next;
     list_del(chunk);
@@ -87,20 +90,22 @@ void *kmalloc(size_t size) {
 
     // uart_printf("\033[0;33m[Chunk]\tAllocate %p at chunk size %u\033[0m\n", chunk, slab_header->chunk_size);
 
-    irq_enable();
+    irq_unlock(&lock);
     return chunk;
 }
 
 void kfree(void *ptr) {
     if (!VA_TO_PA(ptr)) return;
+    irq_lock_t lock;
+    irq_lock(&lock);
 
     uintptr_t slab_start = ((uintptr_t)ptr) & ~(PAGE_SIZE - 1);      // Mask lower bits
     if (slab_start == ((uintptr_t)ptr)) {           // `ptr` is the start address of a page
         page_free((void*)VA_TO_PA(ptr));
+        irq_unlock(&lock);
         return;
     }
 
-    irq_disable();
     slab_header_t *slab_header = (slab_header_t *)slab_start;
     struct list_head *chunk = ptr;
 
@@ -108,7 +113,10 @@ void kfree(void *ptr) {
     ++slab_header->free_list_size;
 
     int pool_idx = pool_find(slab_header->chunk_size);
-    if (pool_idx < 0) return;
+    if (pool_idx < 0) {
+        irq_unlock(&lock);
+        return;
+    }
 
     // uart_printf("\033[0;33m[Chunk]\tFree %p at chunk size %u\033[0m\n", chunk, slab_header->chunk_size);
 
@@ -119,5 +127,6 @@ void kfree(void *ptr) {
         list_del(&slab_header->list);
         page_free((void*)VA_TO_PA(slab_header));
     }
-    irq_enable();
+
+    irq_unlock(&lock);
 }

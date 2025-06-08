@@ -29,4 +29,17 @@ void irq_init();
 
 void irq_handle_pending_tasks();
 
+#include "utils.h"
+
+typedef uint64_t irq_lock_t; 
+
+static inline void irq_lock(irq_lock_t *lock) {
+    *lock = READ_SYSREG(daif);
+    WRITE_SYSREG((*lock | (0x2 << 6)), daif);
+}
+
+static inline void irq_unlock(irq_lock_t *lock) {
+    WRITE_SYSREG(*lock, daif);
+}
+
 #endif // IRQ_H_

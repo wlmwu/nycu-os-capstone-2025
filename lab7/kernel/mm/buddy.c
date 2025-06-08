@@ -131,8 +131,11 @@ void buddy_init() {
 }
 
 void *page_alloc(int order) {
-    irq_disable();
+    irq_lock_t lock;
+    irq_lock(&lock);
+
     if (order < 0 || order >= MAX_ORDER) {
+        irq_unlock(&lock);
         return NULL;
     }
 
@@ -141,6 +144,7 @@ void *page_alloc(int order) {
         ++current_order;
     }
     if (current_order >= MAX_ORDER) {
+        irq_unlock(&lock);
         return NULL;
     }
 
@@ -166,17 +170,25 @@ void *page_alloc(int order) {
 
     // uart_printf("\033[0;33m[Page]\tAllocate %p at order %d, page %d. Next address at order %u: %p\033[0m\n", block, current_order, block_pfn, current_order, free_lists[current_order].next);
 
-    irq_enable();
+    irq_unlock(&lock);
     return (void*)VA_TO_PA(block);
 }
 
 void page_free(void *addr) {    
-    irq_disable();
+    irq_lock_t lock;
+    irq_lock(&lock);
+
     unsigned long block_pfn = addr_to_pfn((void*)PA_TO_VA(addr));
-    if (block_pfn <  0 && block_pfn >= MAX_PAGES) return;
+    if (block_pfn <  0 && block_pfn >= MAX_PAGES) {
+        irq_unlock(&lock);
+        return;
+    }
 
     int order = pfn_order[block_pfn];
-    if (mask_is_free(order, block_pfn)) return;
+    if (mask_is_free(order, block_pfn)) {
+        irq_unlock(&lock);
+        return;
+    }
     
     page_refcounts[block_pfn] = 0;
 
@@ -194,7 +206,7 @@ void page_free(void *addr) {
     
     // uart_printf("\033[0;33m[Page]\tFree %p and add back to order %d, page %d. Next address at order %u: %p\033[0m\n", addr, order, block_pfn, order, free_lists[order].next);
 
-    irq_enable();
+    irq_unlock(&lock);
 }
 
 uint32_t page_refcount_update(uint64_t pa, int8_t increment) {
@@ -207,9 +219,10 @@ uint32_t page_refcount_update(uint64_t pa, int8_t increment) {
     if (increment > 0) {
         ++page_refcounts[block_pfn];
     } else if (increment < 0) {
-        irq_disable();
+        irq_lock_t lock;
+        irq_lock(&lock);
         --page_refcounts[block_pfn];      
-        irq_enable();
+        irq_unlock(&lock);
         if (page_refcounts[block_pfn] == 0) {
             page_free((void*)pa);
         }

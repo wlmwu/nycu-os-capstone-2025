@@ -49,7 +49,10 @@ void schedule() {
 }
 
 void sched_enqueue_task(sched_task_t *thread) {
+    irq_lock_t lock;
+    irq_lock(&lock);
     list_add_tail(&thread->list, &sched_queue);
+    irq_unlock(&lock);
 }
 
 extern unsigned long _start;

@@ -5,6 +5,7 @@
 
 #include "utils.h"
 #include "ringbuffer.h"
+#include "irq.h"
 
 #include <stdarg.h>
 
@@ -159,33 +160,46 @@ void uart_irq_disable() {
 }
 
 void uart_async_putc(const char c) {
+    irq_lock_t lock;
+    irq_lock(&lock);
     ring_buffer_enqueue(uart_tx_buffer, c);
+    irq_unlock(&lock);
     *AUX_MU_IER_REG |= 0b10;        // Enable transmit interrupts
 }
 
 char uart_async_getc() {
     char c;
-    while (!ring_buffer_dequeue(uart_rx_buffer, &c)) {
-        *AUX_MU_IER_REG |= 0b01;        // Enable receive interrupts
+    irq_lock_t lock;
+    irq_lock(&lock);
+    for ( ; !ring_buffer_dequeue(uart_rx_buffer, &c); irq_lock(&lock)) {
+        *AUX_MU_IER_REG |= 0b01;    // Enable receive interrupts
+        irq_unlock(&lock);
     }
+    irq_unlock(&lock);
     return c;
 }
 
 void uart_irq_handle() {
     if(*AUX_MU_IIR_REG & 0b010) {                   // Transmit holding register empty
+        irq_lock_t lock;
+        irq_lock(&lock);
         while (!ring_buffer_is_empty(uart_tx_buffer)) {
             char c;
             ring_buffer_dequeue(uart_tx_buffer, &c);
             uart_putc(c);
         }
         *AUX_MU_IER_REG &= ~(0b10);  
+        irq_unlock(&lock);
     } else if(*AUX_MU_IIR_REG & 0b100) {            // Receiver holds valid byte
+        irq_lock_t lock;
+        irq_lock(&lock);
         if (ring_buffer_is_full(uart_rx_buffer)) {
             *AUX_MU_IER_REG &= ~(0b01);                 // Disable receive interrupt
         } else {
             char c = uart_getc();
             ring_buffer_enqueue(uart_rx_buffer, c);
         }
+        irq_unlock(&lock);
     } else {
         uart_printf("UART IRQ unknown\n");
     }

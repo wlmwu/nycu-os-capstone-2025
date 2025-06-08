@@ -3,7 +3,7 @@
 
 #include "reg_uart.h"
 
-#define UART_BUFFER_SIZE 4096
+#define UART_BUFFER_SIZE 256
 
 void uart_init();
 
