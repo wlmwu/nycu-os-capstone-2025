@@ -38,6 +38,8 @@ sched_task_t* kthread_create(sched_fn_t fn, void *args) {
     sched_task_t *thrd = kmalloc(sizeof(sched_task_t));
     memset(thrd, 0, sizeof(sched_task_t));
 
+    static pid_t pid = 0;
+    thrd->pid = pid++;
     thrd->state = kThRunnable;
     thrd->ustack = kmalloc(SCHED_STACK_SIZE);
     thrd->kstack = kmalloc(SCHED_STACK_SIZE);

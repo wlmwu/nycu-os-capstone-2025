@@ -89,10 +89,10 @@ void sched_start() {
     sched_enqueue_task(thrd);
 }
 
-sched_task_t* sched_get_task(uint32_t taskid) {
+sched_task_t* sched_get_task(pid_t taskid) {
     sched_task_t *thrd, *tmp;
     list_for_each_entry_safe(thrd, tmp, &sched_queue, list) {
-        if ((uint32_t)thrd == (uint32_t)taskid) {    // PID hasn't implemented, use address instead
+        if (thrd->pid == taskid) {    // PID hasn't implemented, use address instead
             return thrd;
         }
     }

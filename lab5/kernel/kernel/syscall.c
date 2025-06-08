@@ -11,8 +11,7 @@
 
 static int sys_getpid(trapframe_t *tf) {
     sched_task_t *curr = sched_get_current();
-    uint32_t pid = (uintptr_t)curr;
-    return pid;
+    return curr->pid;
 }
 
 static int sys_read(trapframe_t *tf) {
@@ -92,7 +91,7 @@ childret:
     if (curr == parent) {
         child->context.pc = (uintptr_t)(&&childret);    // https://gcc.gnu.org/onlinedocs/gcc/Labels-as-Values.html
         irq_enable();
-        return (uintptr_t)child;
+        return child->pid;
     } else {
         tf = (trapframe_t*)((char*)tf + kstack_offset);
         tf->sp = (int32_t)tf->sp + ustack_offset;
@@ -138,7 +137,11 @@ static int sys_sigkill(trapframe_t *tf) {
     int pid = tf->x[0];
     int sig = tf->x[1];
     sched_task_t *thrd = sched_get_task(pid);
-    if (!thrd || sig < 0 || sig >= NSIG) return -1;
+    if (!thrd) {
+        uart_printf("kill: (%u) - No such process\n", pid);
+        return -1;
+    }
+    if (sig < 0 || sig >= NSIG) return -1;
     thrd->sigpending |= (1 << sig);
     return 0;
 }

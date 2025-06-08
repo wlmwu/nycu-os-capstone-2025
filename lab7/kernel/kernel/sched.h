@@ -3,12 +3,15 @@
 
 typedef struct sched_task sched_task_t;
 
+#include <stdint.h>
+
+typedef uint32_t pid_t;
+
 #include "list.h"
 #include "signal.h"
 #include "exception.h"
 #include "fs.h"
 #include "proc.h"
-#include <stdint.h>
 #include <stddef.h>
 
 struct sched_context {
@@ -32,6 +35,7 @@ typedef void (*sched_fn_t)(void *args);
 struct sched_task {
     struct sched_context context;			// Saved CPU context for context switch
     enum { kThRunnable, kThDead } state;	// Current state
+    pid_t pid;                              // Process ID
     void *kstack;                           // Kernel stack bottom
     sched_fn_t fn;							// Entry point address of the user program
     void *args;								// Argument passed to the user program's entry point (fn)
@@ -56,7 +60,7 @@ void sched_enqueue_task(sched_task_t *thread);
 void sched_start();
 void sched_init();
 
-sched_task_t* sched_get_task(uint32_t taskid);
+sched_task_t* sched_get_task(pid_t taskid);
 
 static inline sched_task_t* sched_get_current() {
     void *curr_thrd;

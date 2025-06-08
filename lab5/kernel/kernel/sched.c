@@ -81,10 +81,10 @@ void sched_start() {
     kthread_run(idle, NULL);
 }
 
-sched_task_t* sched_get_task(int taskid) {
+sched_task_t* sched_get_task(pid_t taskid) {
     sched_task_t *thrd, *tmp;
     list_for_each_entry_safe(thrd, tmp, &sched_queue, list) {
-        if ((uintptr_t)thrd == taskid) {    // PID hasn't implemented, use address instead
+        if (thrd->pid == taskid) {    // PID hasn't implemented, use address instead
             return thrd;
         }
     }
