@@ -8,7 +8,7 @@ To build the bootloader kernel, simply run:
 make
 ```
 
-This will compile the kernel and produce the final bootloader image (`kernel8.img`).
+This will compile the kernel and produce the bootloader image (`kernel8.img`).
 
 ## Running the Bootloader Kernel
 

@@ -16,9 +16,9 @@ To run the program using QEMU, follow these steps:
    make qemu
    ```
 
-## Running on Raspberry Pi 3
+## Running on Raspberry Pi 3B+
 
-To run the program on a Raspberry Pi 3, follow these steps:
+To run the program on a Raspberry Pi, follow these steps:
 
 1. Build the program:
 
@@ -33,9 +33,9 @@ To run the program on a Raspberry Pi 3, follow these steps:
      - `start.elf`
      - `fixup.dat`
 
-3. Insert the SD card into your Raspberry Pi 3.
+3. Insert the SD card into your Raspberry Pi.
 
-4. Open a terminal and connect to the Raspberry Pi 3 via serial:
+4. Open a terminal and connect to the Raspberry Pi via serial:
 
    ```bash
    screen /dev/tty.usbserial-0001 115200

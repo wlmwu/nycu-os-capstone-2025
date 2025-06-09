@@ -8,13 +8,13 @@ To build the kernel, simply run:
 make
 ```
 
-This will compile the kernel and produce the final bootloader image (`kernel8.img`).
+This will compile the kernel and produce the image (`kernel8.img`).
 
 ## Running the  Kernel
 
 ## Run with QEMU
 
-To run the bootloader kernel using QEMU, simply run:
+To run the kernel using QEMU, simply run:
 
 ```bash
 make run
@@ -40,3 +40,4 @@ Alternatively, you can use the `debug.sh` script to automate the process:
 ```bash
 ./debug.sh
 ```
+**Note**: You need to install `tmux` before using the `debug.sh` script.
